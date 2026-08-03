@@ -85,8 +85,8 @@ export function TorrentsView() {
   const deleteMutation = useDeleteTorrents();
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [sortField, setSortField] = useState<Columns>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortField, setSortField] = useState<Columns>('added_on');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [filesDialogTorrent, setFilesDialogTorrent] = useState<Torrent | null>(null);
   const [detailTorrent, setDetailTorrent] = useState<Torrent | null>(null);

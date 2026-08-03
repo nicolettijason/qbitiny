@@ -12,7 +12,7 @@ const columnsActive = {
     ratio: { active: false },
     num_seeds: { active: true },
     num_leechs: { active: true },
-    added_on: { active: false },
+    added_on: { active: true },
     uploaded: { active: false },
     uploaded_session: { active: false },
     category: { active: false },
