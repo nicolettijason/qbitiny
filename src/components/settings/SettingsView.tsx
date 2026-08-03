@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTheme } from 'next-themes'
-import { Sun, Moon, AlertCircle } from 'lucide-react'
+import { Sun, Moon, GripVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,72 +16,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { useAuth } from '@/hooks/useAuth'
 import { qbitClient } from '@/lib/api'
 import { toast } from 'sonner'
+import { Columns, Preferences } from '@/types'
+import { columnsDictionary, defaultPreferences } from "@/constants";
+import { getStoredTableSettings } from "@/helpers";
 
-interface Preferences {
-  locale: string
-  save_path: string
-  temp_path: string
-  temp_path_enabled: boolean
-  create_subfolder_enabled: boolean
-  start_paused_enabled: boolean
-  auto_tmm_enabled: boolean
-  queueing_enabled: boolean
-  max_active_downloads: number
-  max_active_torrents: number
-  max_active_uploads: number
-  dl_limit: number
-  up_limit: number
-  alt_dl_limit: number
-  alt_up_limit: number
-  listen_port: number
-  upnp: boolean
-  random_port: boolean
-  dht: boolean
-  pex: boolean
-  lsd: boolean
-  encryption: number
-}
-
-const defaultPreferences: Preferences = {
-  locale: 'en',
-  save_path: '',
-  temp_path: '',
-  temp_path_enabled: false,
-  create_subfolder_enabled: true,
-  start_paused_enabled: false,
-  auto_tmm_enabled: false,
-  queueing_enabled: false,
-  max_active_downloads: 3,
-  max_active_torrents: 5,
-  max_active_uploads: 3,
-  dl_limit: 0,
-  up_limit: 0,
-  alt_dl_limit: 1024,
-  alt_up_limit: 1024,
-  listen_port: 6881,
-  upnp: true,
-  random_port: false,
-  dht: true,
-  pex: true,
-  lsd: true,
-  encryption: 0,
-}
 
 export function SettingsView() {
-  const { logout, username } = useAuth()
-  const { theme, setTheme } = useTheme()
-  const [preferences, setPreferences] = useState<Preferences>(defaultPreferences)
+  const { theme, setTheme } = useTheme();
+  const [preferences, setPreferences] = useState(defaultPreferences)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [revertDialogOpen, setRevertDialogOpen] = useState(false)
   const [reverting, setReverting] = useState(false)
+  const [resetColumnsDialogOpen, setResetColumnsDialogOpen] = useState(false)
+  const [draggedColumn, setDraggedColumn] = useState<keyof typeof defaultPreferences.columns | null>(null)
+  const dragOverRef = useRef<string | null>(null)
 
   useEffect(() => {
     loadPreferences()
   }, [])
+
 
   const loadPreferences = async () => {
     try {
@@ -89,6 +45,7 @@ export function SettingsView() {
       setPreferences({
         ...defaultPreferences,
         ...prefs,
+        columns: getStoredTableSettings(),
         dl_limit: prefs.dl_limit > 0 ? Math.round(prefs.dl_limit / 1024) : prefs.dl_limit,
         up_limit: prefs.up_limit > 0 ? Math.round(prefs.up_limit / 1024) : prefs.up_limit,
         alt_dl_limit: prefs.alt_dl_limit > 0 ? Math.round(prefs.alt_dl_limit / 1024) : prefs.alt_dl_limit,
@@ -102,12 +59,32 @@ export function SettingsView() {
     }
   }
 
+  const handleSaveTableSettings = () => {
+    try {
+        localStorage.setItem('qbitwebber_tableViewSettings', JSON.stringify(preferences.columns))
+        toast.success('Table view settings saved')
+    } catch (error) {
+        console.error('Failed to save table view settings:', error)
+        toast.error('Failed to save table view settings')
+    }
+  };
+
+  const resetTableSettings = () => {
+    const defaultColumns = defaultPreferences.columns
+    setPreferences(prev => ({ ...prev, columns: defaultColumns }))
+    localStorage.removeItem('qbitwebber_tableViewSettings')
+    toast.success('Table view settings reset to default')
+  }
+
   const handleSave = async (section: string) => {
     setSaving(true)
     try {
       const prefsToSave: Record<string, unknown> = {}
 
       switch (section) {
+        case 'table_view':
+          prefsToSave.columns = preferences.columns
+          break
         case 'general':
           prefsToSave.locale = preferences.locale
           prefsToSave.save_path = preferences.save_path
@@ -150,10 +127,6 @@ export function SettingsView() {
     }
   }
 
-  const handleLogout = async () => {
-    await logout()
-    toast('Logged out')
-  }
 
   const handleRevert = async () => {
     setReverting(true)
@@ -169,13 +142,67 @@ export function SettingsView() {
     }
   }
 
+  const handleDragStart = (columnId: keyof typeof defaultPreferences.columns) => {
+    setDraggedColumn(columnId)
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, targetColumn: keyof typeof defaultPreferences.columns) => {
+    e.preventDefault()
+    if (!draggedColumn || draggedColumn === targetColumn) {
+      dragOverRef.current = null
+      return
+    }
+
+    dragOverRef.current = targetColumn
+
+    // Swap dynamically during drag
+    const draggedOrder = preferences.columns[draggedColumn as keyof typeof defaultPreferences.columns]!.order
+    const targetOrder = preferences.columns[targetColumn]!.order
+
+    const newColumns = { ...preferences.columns }
+    newColumns[draggedColumn] = {
+      ...newColumns[draggedColumn]!,
+      order: targetOrder
+    }
+    newColumns[targetColumn] = {
+      ...newColumns[targetColumn!],
+      order: draggedOrder
+    }
+
+    updatePreference('columns', newColumns)
+  }
+
+  const handleDragLeave = () => {
+    dragOverRef.current = null
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    dragOverRef.current = null
+    setDraggedColumn(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedColumn(null)
+    dragOverRef.current = null
+  }
+
   const updatePreference = <K extends keyof Preferences>(key: K, value: Preferences[K]) => {
     setPreferences(prev => ({ ...prev, [key]: value }))
   }
 
+    const orderedColumns = useMemo(() => Object.entries(preferences.columns)
+    .sort(([, a], [, b]) => a.order - b.order)
+    .reduce((acc, [key, value]) => {
+      acc[key as keyof typeof preferences.columns] = value
+      return acc
+    }, {} as typeof preferences.columns)
+  , [preferences]);
+
   if (loading) {
     return <div className="p-4">Loading preferences...</div>
   }
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
@@ -256,6 +283,77 @@ export function SettingsView() {
               <Button onClick={() => handleSave('general')} disabled={saving}>
                 Save General Settings
               </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="mt-3">
+            <CardHeader>
+              <CardTitle>Table View Settings</CardTitle>
+              <CardDescription>Configure which columns are displayed in the torrent list. Drag to reorder columns.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Columns</Label>
+                <div className="flex flex-col space-y-2 border rounded-lg p-4 bg-muted/30">
+                  {Object.entries(orderedColumns).map(([column, config]) => (
+                    <div
+                      key={column}
+                      draggable
+                      onDragStart={() => handleDragStart(column as keyof typeof defaultPreferences.columns)}
+                      onDragOver={(e) => handleDragOver(e, column as keyof typeof defaultPreferences.columns)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onDragEnd={handleDragEnd}
+                      className={`flex items-center space-x-3 p-3 pl-0 rounded-md transition-all ${
+                        draggedColumn === column
+                          ? 'border border-primary bg-primary/10 opacity-70'
+                          : 'border border-transparent hover:bg-muted/20'
+                      } cursor-move`}
+                    >
+                      <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <Checkbox
+                        id={column}
+                        checked={config.active}
+                        onCheckedChange={(checked) => updatePreference('columns', {
+                          ...preferences.columns,
+                          [column]: { ...config, active: !!checked }
+                        })}
+                      />
+                      <Label htmlFor={column} className="flex-1 cursor-pointer">
+                        {columnsDictionary[column as Columns] || column}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Dialog open={resetColumnsDialogOpen} onOpenChange={setResetColumnsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="destructive">
+                      Reset to default
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Reset column settings?</DialogTitle>
+                      <DialogDescription>
+                        This will restore the default columns order and visibility. Your current configuration will be lost.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setResetColumnsDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button variant="destructive" onClick={() => { resetTableSettings(); setResetColumnsDialogOpen(false) }}>
+                        Reset
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <Button onClick={() => handleSaveTableSettings()}>
+                  Save
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

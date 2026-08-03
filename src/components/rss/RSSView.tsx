@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Plus, Trash2, ExternalLink, RefreshCw, Rss } from 'lucide-react'
+import { Plus, Trash2, ExternalLink, Rss } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { 
   Dialog, 
   DialogContent, 
@@ -86,7 +86,35 @@ export function RSSView() {
         </div>
 
         {feeds.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No feeds configured</p>
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+            <Rss className="h-10 w-10 text-muted-foreground/40" />
+            <p className="text-sm font-medium text-muted-foreground">No RSS feeds yet</p>
+            <p className="text-xs text-muted-foreground/70">Add a feed to start following content</p>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="default" className="gap-2 mt-1">
+                  <Plus className="h-4 w-4" />
+                  Add your first feed
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add RSS Feed</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleAddFeed} className="space-y-4">
+                  <Input
+                    placeholder="Feed URL"
+                    value={newFeedUrl}
+                    onChange={(e) => setNewFeedUrl(e.target.value)}
+                    required
+                  />
+                  <Button type="submit" className="w-full" disabled={addFeed.isPending}>
+                    Add Feed
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         ) : (
           feeds.map((feed) => (
             <Card 

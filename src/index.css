@@ -181,17 +181,67 @@
 
 
 @font-face {
-  font-family: 'Silkscreen'; /* Give it a name */
+  font-family: 'Silkscreen';
   src: url('./assets/fonts/Silkscreen-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
-  font-display: swap; /* Helps with loading performance */
+  font-display: swap;
 }
 
 @font-face {
-  font-family: 'Doto'; /* Give it a name */
+  font-family: 'Doto';
   src: url('./assets/fonts/Doto.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
-  font-display: swap; /* Helps with loading performance */
+  font-display: swap;
+}
+
+/* ── Global interactive element enhancements ── */
+@layer base {
+  /* Cursor pointer on all obviously clickable elements */
+  a,
+  label[for],
+  [role="button"],
+  [role="menuitem"],
+  [role="option"],
+  [role="tab"],
+  [role="checkbox"],
+  [role="radio"],
+  [data-slot="checkbox"],
+  [data-slot="select-trigger"],
+  [data-slot="dropdown-menu-item"],
+  [data-slot="menu-item"],
+  select {
+    cursor: pointer;
+  }
+
+  /* Dropdown menu items */
+  [data-slot="dropdown-menu-item"],
+  [role="menuitem"] {
+    transition: background-color 0.15s ease, color 0.15s ease;
+    cursor: pointer;
+  }
+
+  /* Tabs triggers */
+  [role="tab"] {
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+  }
+
+  /* Select */
+  select {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  select:hover {
+    border-color: hsl(var(--ring));
+  }
+
+  /* Checkbox */
+  [data-slot="checkbox"] {
+    cursor: pointer;
+    transition: opacity 0.15s ease, box-shadow 0.15s ease;
+  }
+  [data-slot="checkbox"]:hover {
+    opacity: 0.85;
+  }
 }

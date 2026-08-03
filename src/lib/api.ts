@@ -57,7 +57,6 @@ class QBittorrentClient {
     })
 
     const responseText = await response.text()
-    console.log('API Response:', response.status, responseText)
 
     if (!response.ok) {
       if (response.status === 403 || response.status === 401) {

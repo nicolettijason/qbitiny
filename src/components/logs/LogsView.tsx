@@ -1,18 +1,34 @@
+import { useState } from 'react'
 import { AlertCircle, AlertTriangle, Info } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
 import { useLogs } from '@/hooks/useApi'
-import type { LogType } from '@/types'
+import type { LogEntry } from '@/types'
 
-function getLogIcon(type: LogType) {
+type FilterLevel = 'ALL' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL'
+
+function getLogIcon(type: FilterLevel | string) {
   switch (type) {
     case 'CRITICAL':
     case 'ERROR':
-      return <AlertCircle className="h-4 w-4" />
+      return <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 text-destructive" />
     case 'WARNING':
-      return <AlertTriangle className="h-4 w-4" />
+      return <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-yellow-500" />
     default:
-      return <Info className="h-4 w-4" />
+      return <Info className="h-3.5 w-3.5 flex-shrink-0 text-blue-400" />
+  }
+}
+
+function getLogTextColor(type: string) {
+  switch (type) {
+    case 'CRITICAL':
+    case 'ERROR':
+      return 'text-destructive'
+    case 'WARNING':
+      return 'text-yellow-500'
+    default:
+      return ''
   }
 }
 
@@ -22,6 +38,7 @@ function formatTimestamp(timestamp: number): string {
 
 export function LogsView() {
   const { data: logs, isLoading } = useLogs()
+  const [filter, setFilter] = useState<FilterLevel>('ALL')
 
   if (isLoading) {
     return <div className="text-center py-8 text-muted-foreground">Loading logs...</div>
@@ -31,26 +48,61 @@ export function LogsView() {
     return <div className="text-center py-8 text-muted-foreground">No logs</div>
   }
 
+  const filtered =
+    filter === 'ALL'
+      ? logs.slice(0, 100)
+      : (logs as LogEntry[])
+          .filter((l) => l.type === filter)
+          .slice(0, 100)
+
+  const filters: { label: string; value: FilterLevel; className: string }[] = [
+    { label: 'All', value: 'ALL', className: '' },
+    { label: 'Info', value: 'INFO', className: 'text-blue-400' },
+    { label: 'Warning', value: 'WARNING', className: 'text-yellow-500' },
+    { label: 'Error', value: 'ERROR', className: 'text-destructive' },
+  ]
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Logs</CardTitle>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle>Logs</CardTitle>
+          <div className="flex items-center gap-1">
+            {filters.map((f) => (
+              <Button
+                key={f.value}
+                size="sm"
+                variant={filter === f.value ? 'secondary' : 'ghost'}
+                className={`h-7 text-xs ${f.className}`}
+                onClick={() => setFilter(f.value)}
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">Showing last 100 entries</p>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea className="h-[calc(100vh-200px)]">
+        <ScrollArea className="h-[calc(100vh-220px)]">
           <div className="p-4 space-y-1">
-            {logs.slice(0, 100).map((log) => (
+            {(logs.slice(0, 100) as LogEntry[])
+              .filter((log) => filter === 'ALL' || log.type === filter)
+              .map((log) => (
               <div
                 key={log.id}
-                className="flex items-start gap-2 py-1 text-xs"
+                className={`flex items-start gap-2 py-1 text-xs ${getLogTextColor(log.type)}`}
               >
-                <span className="text-muted-foreground text-xs whitespace-nowrap">
+                {getLogIcon(log.type)}
+                <span className="text-muted-foreground whitespace-nowrap flex-shrink-0">
                   {formatTimestamp(log.timestamp)}
                 </span>
-                {/* {getLogIcon(log.type as LogType)} */}
-                <span className="break-all text-xs">{log.message}</span>
+                <span className="break-all">{log.message}</span>
               </div>
             ))}
+            {filtered.length === 0 && (
+              <p className="text-center text-muted-foreground py-4">No logs for this level</p>
+            )}
           </div>
         </ScrollArea>
       </CardContent>

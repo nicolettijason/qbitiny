@@ -7,14 +7,18 @@ import {
   Settings,
   Menu,
   X,
-  Home,
-  Radio
+  Radio,
+  LogOut,
+  Sun,
+  Moon,
+  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { useTransferInfo } from '@/hooks/useApi'
+import { formatSize } from "@/helpers"
+import { useTheme } from 'next-themes'
 
 type Tab = 'torrents' | 'add' | 'rss' | 'search' | 'logs' | 'settings'
 
@@ -28,6 +32,8 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { logout } = useAuth()
   const { data: transferInfo } = useTransferInfo()
+  const { theme, setTheme } = useTheme()
+
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'torrents', label: 'Torrents', icon: <Download className="h-5 w-5" /> },
     { id: 'add', label: 'Add', icon: <Server className="h-5 w-5" /> },
@@ -55,18 +61,34 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
           </div>
           
           {/* Transfer stats */}
-          {transferInfo && (
-            <div className="flex items-center gap-3 text-xs">
-              <div className="hidden sm:flex items-center gap-1">
-                <span className="text-green-500">↓</span>
-                <span>{(transferInfo.dl_info_speed / 1024).toFixed(1)} KB/s</span>
+          <div className="flex items-center gap-3">
+            {transferInfo ? (
+              <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-1 bg-muted/60 rounded px-2 py-1 text-[10px] sm:text-xs">
+                  <span className="text-blue-500 font-bold">↓</span>
+                  <span className="font-medium">{formatSize(transferInfo.dl_info_speed)}/s</span>
+                  <span className="text-muted-foreground inline">({formatSize(transferInfo.dl_info_data)})</span>
+                </div>
+                <div className="flex items-center gap-1 bg-muted/60 rounded text-[10px] sm:text-xs py-1 px-2">
+                  <span className="text-green-500 font-bold">↑</span>
+                  <span className="font-medium">{formatSize(transferInfo.up_info_speed)}/s</span>
+                  <span className="text-muted-foreground inline">({formatSize(transferInfo.up_info_data)})</span>
+                </div>
               </div>
-              <div className="hidden sm:flex items-center gap-1">
-                <span className="text-blue-500">↑</span>
-                <span>{(transferInfo.up_info_speed / 1024).toFixed(1)} KB/s</span>
-              </div>
-            </div>
-          )}
+            ) : (
+              <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
+            )}
+            {/* Theme toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hidden sm:flex"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              title="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
 
         {/* Mobile menu */}
@@ -87,6 +109,32 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
                   {tab.label}
                 </Button>
               ))}
+              <Button
+                variant="ghost"
+                className="justify-start gap-2 text-destructive hover:text-destructive mt-1"
+                onClick={logout}
+              >
+                <LogOut className="h-5 w-5" />
+                Logout
+              </Button>
+                <div className="border-t my-2" />
+                <Button
+                    variant="ghost"
+                    className="justify-start gap-2"
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                    title="Toggle theme"
+                >
+                    {theme === 'dark'
+                        ? <>
+                            <Sun className="h-4 w-4" />
+                            <span>dark</span>
+                        </>
+                        : <>
+                            <Moon className="h-4 w-4" />
+                            <span>light</span>
+                        </>
+                    }
+                </Button>
             </nav>
           </div>
         )}
@@ -107,6 +155,15 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
               {tab.label}
             </Button>
           ))}
+          <div className="flex-1" />
+          <Button
+            variant="ghost"
+            className="justify-start gap-2 text-destructive hover:text-destructive mt-1"
+            onClick={logout}
+          >
+            <LogOut className="h-5 w-5" />
+            Logout
+          </Button>
         </aside>
 
         {/* Main content */}
@@ -115,20 +172,20 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav — all 6 tabs */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur">
         <div className="flex justify-around py-2">
-          {tabs.slice(0, 5).map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-1 rounded-md",
-                activeTab === tab.id ? "text-primary" : "text-muted-foreground"
+                "flex flex-col items-center gap-1 px-2 py-1 rounded-md cursor-pointer transition-all",
+                activeTab === tab.id ? "text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent hover:brightness-95"
               )}
               onClick={() => onTabChange(tab.id)}
             >
               {tab.icon}
-              <span className="text-[10px]">{tab.label}</span>
+              <span className="text-[9px]">{tab.label}</span>
             </button>
           ))}
         </div>
