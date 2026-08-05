@@ -237,6 +237,16 @@ class QBittorrentClient {
 		});
 	}
 
+	async setForceStart(hashes: string[], forceStart: boolean): Promise<void> {
+		const formData = new URLSearchParams();
+		formData.append("hashes", hashes.join("|"));
+		formData.append("value", forceStart ? "true" : "false");
+		await this.request("/api/v2/torrents/setForceStart", {
+			method: "POST",
+			body: formData,
+		});
+	}
+
 	async getRSSFeeds(): Promise<{ feeds: RSSFeed[] }> {
 		return this.request("/api/v2/rss/feeds");
 	}
@@ -323,6 +333,6 @@ class QBittorrentClient {
 	}
 }
 
-export const qbitClient =import.meta.env.VITE_DEMO_MODE === "true"
+export const qbitClient = import.meta.env.VITE_DEMO_MODE === "true"
 		? demoClient
 		: new QBittorrentClient();

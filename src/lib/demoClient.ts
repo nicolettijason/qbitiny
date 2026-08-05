@@ -397,6 +397,8 @@ class DemoQBittorrentClient {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async resumeTorrents(_hashes: string[]): Promise<void> {}
 
+	async setForceStart(_hashes: string[], _forceStart: boolean): Promise<void> {}
+
 	async getRSSFeeds(): Promise<{ feeds: RSSFeed[] }> {
 		return {
 			feeds: [

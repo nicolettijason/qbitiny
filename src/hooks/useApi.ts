@@ -112,6 +112,18 @@ export function useResumeTorrents() {
   })
 }
 
+export function useSetForceStart() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ hashes, forceStart }: { hashes: string[]; forceStart: boolean }) =>
+      qbitClient.setForceStart(hashes, forceStart),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['torrents'] })
+    },
+  })
+}
+
 export function useRSSFeeds() {
   return useQuery({
     queryKey: ['rss', 'feeds'],
