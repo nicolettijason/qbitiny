@@ -28,7 +28,6 @@ import { Columns, Preferences } from "@/types";
 import {
 	columnsDictionary,
 	defaultPreferences,
-	locales,
 	qbittorrentLocales,
 } from "@/constants";
 import { getStoredTableSettings } from "@/helpers";
