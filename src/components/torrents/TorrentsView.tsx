@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
 	ArrowDown,
 	ArrowUp,
@@ -115,6 +115,10 @@ export function TorrentsView() {
 		getStoredTableSettings(),
 	);
 	const [searchQuery, setSearchQuery] = useState("");
+
+	const sizeUnit = useMemo(() => {
+		return localStorage.getItem("qbitwebber_sizeUnit") || "B";
+	}, []);
 
 	function computeSortedTorrents() {
 		if (!torrents) return [];
@@ -276,18 +280,18 @@ export function TorrentsView() {
 				);
 			},
 			size: (torrent) => (
-				<span className="text-sm">{formatSize(torrent.size)}</span>
+				<span className="text-sm">{formatSize(torrent.size, sizeUnit)}</span>
 			),
 			dlspeed: (torrent) => (
 				<div className="flex items-center gap-1">
 					<Download className="h-3 w-3 text-blue-500" />
-					{formatSize(torrent.dlspeed)}/s
+					{formatSize(torrent.dlspeed, sizeUnit)}/s
 				</div>
 			),
 			upspeed: (torrent) => (
 				<div className="flex items-center gap-1">
 					<Upload className="h-3 w-3 text-green-500" />
-					{formatSize(torrent.upspeed)}/s
+					{formatSize(torrent.upspeed, sizeUnit)}/s
 				</div>
 			),
 			eta: (torrent) => (
@@ -310,10 +314,10 @@ export function TorrentsView() {
 				<span className="text-sm">{formatDate(torrent.added_on)}</span>
 			),
 			uploaded: (torrent) => (
-				<span className="text-sm">{formatSize(torrent.uploaded)}</span>
+				<span className="text-sm">{formatSize(torrent.uploaded, sizeUnit)}</span>
 			),
 			uploaded_session: (torrent) => (
-				<span className="text-sm">{formatSize(torrent.uploaded_session)}</span>
+				<span className="text-sm">{formatSize(torrent.uploaded_session, sizeUnit)}</span>
 			),
 			tracker: (torrent) => {
 				let host = torrent.tracker;
@@ -782,7 +786,7 @@ export function TorrentsView() {
 									{getStateLabel(torrent.state, torrent.completion_on)}
 								</span>
 								<span className="tabular-nums">{progressPct}%</span>
-								<span>{formatSize(torrent.size)}</span>
+								<span>{formatSize(torrent.size, sizeUnit)}</span>
 								{torrent.category ? (
 									<span
 										className="rounded px-1.5 py-0.5 font-medium text-[10px]"
@@ -802,13 +806,13 @@ export function TorrentsView() {
 									<span className="flex items-center gap-1">
 										<Download className="h-3 w-3 text-blue-500" />
 										<span className="tabular-nums">
-											{formatSize(torrent.dlspeed)}/s
+											{formatSize(torrent.dlspeed, sizeUnit)}/s
 										</span>
 									</span>
 									<span className="flex items-center gap-1">
 										<Upload className="h-3 w-3 text-green-500" />
 										<span className="tabular-nums">
-											{formatSize(torrent.upspeed)}/s
+											{formatSize(torrent.upspeed, sizeUnit)}/s
 										</span>
 									</span>
 									<span className="flex items-center gap-1">

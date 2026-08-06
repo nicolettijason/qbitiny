@@ -138,6 +138,8 @@ export function TorrentDetailDialog({
 				.filter(Boolean)
 		: [];
 
+    const unitSize = localStorage.getItem("qbitwebber_sizeUnit") || "B";
+
 	return (
 		<div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
 			{/* Backdrop */}
@@ -245,7 +247,7 @@ export function TorrentDetailDialog({
 								label="Download"
 								value={
 									<span className="text-blue-500">
-										{formatSize(torrent.dlspeed)}/s
+										{formatSize(torrent.dlspeed, unitSize)}/s
 									</span>
 								}
 							/>
@@ -254,7 +256,7 @@ export function TorrentDetailDialog({
 								label="Upload"
 								value={
 									<span className="text-green-500">
-										{formatSize(torrent.upspeed)}/s
+										{formatSize(torrent.upspeed, unitSize)}/s
 									</span>
 								}
 							/>
@@ -275,17 +277,17 @@ export function TorrentDetailDialog({
 							<StatCard
 								icon={<HardDrive className="h-3 w-3" />}
 								label="Size"
-								value={formatSize(torrent.size)}
+								value={formatSize(torrent.size, unitSize)}
 							/>
 							<StatCard
 								icon={<Download className="h-3 w-3" />}
 								label="Downloaded"
-								value={formatSize(torrent.downloaded)}
+								value={formatSize(torrent.downloaded, unitSize)}
 							/>
 							<StatCard
 								icon={<Upload className="h-3 w-3" />}
 								label="Uploaded"
-								value={formatSize(torrent.uploaded)}
+								value={formatSize(torrent.uploaded, unitSize)}
 							/>
 							<StatCard
 								icon={<TrendingUp className="h-3 w-3" />}
@@ -346,19 +348,19 @@ export function TorrentDetailDialog({
 								/>
 								<InfoRow
 									label="Avg DL speed"
-									value={`${formatSize(torrent.dl_speed_avg)}/s`}
+									value={`${formatSize(torrent.dl_speed_avg, unitSize)}/s`}
 								/>
 								<InfoRow
 									label="Avg UP speed"
-									value={`${formatSize(torrent.up_speed_avg)}/s`}
+									value={`${formatSize(torrent.up_speed_avg, unitSize)}/s`}
 								/>
 								<InfoRow
 									label="Downloaded"
-									value={formatSize(torrent.downloaded)}
+									value={formatSize(torrent.downloaded, unitSize)}
 								/>
 								<InfoRow
 									label="Uploaded"
-									value={`${formatSize(torrent.uploaded)} / session ${formatSize(torrent.uploaded_session)}`}
+									value={`${formatSize(torrent.uploaded, unitSize)} / session ${formatSize(torrent.uploaded_session, unitSize)}`}
 								/>
 							</div>
 						</div>

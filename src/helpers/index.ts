@@ -9,10 +9,18 @@ export const getStoredTableSettings = () => {
 	return { ...defaultPreferences.columns, ...parsedSettings };
 };
 
-export function formatSize(bytes: number): string {
-	if (!bytes) return "0 B";
+export function formatSize(bytes: number, sizeUnit?: string): string {
+	sizeUnit = sizeUnit || localStorage.getItem("qbitwebber_sizeUnit") || "B";
+	if (!bytes) return `0 ${sizeUnit}`;
 	const k = 1024;
-	const sizes = ["B", "KB", "MB", "GB", "TB"];
+	const sizes = [
+		sizeUnit,
+		`K${sizeUnit}`,
+		`M${sizeUnit}`,
+		`G${sizeUnit}`,
+		`T${sizeUnit}`,
+		`P${sizeUnit}`,
+	];
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
 	return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }

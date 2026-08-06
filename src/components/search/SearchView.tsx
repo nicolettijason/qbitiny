@@ -28,14 +28,7 @@ import {
 import { toast } from '@/hooks/use-toast'
 import { qbitClient } from '@/lib/api'
 import type { SearchResult } from '@/types'
-
-function formatSize(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
-}
+import { formatSize } from '@/helpers'
 
 type SortField = 'fileName' | 'fileSize' | 'nbSeeders' | 'nbLeechers' | 'siteUrl'
 type SortDirection = 'asc' | 'desc'
@@ -136,6 +129,10 @@ export function SearchView() {
       return 0
     })
   }, [results, sortField, sortDirection])
+
+  const unitSize = useMemo(() => {
+    return localStorage.getItem("qbitwebber_sizeUnit") || "B";
+  }, []);
 
   const totalPages = Math.ceil(sortedResults.length / PAGE_SIZE)
   const paginatedResults = sortedResults.slice(
@@ -307,7 +304,7 @@ export function SearchView() {
                           <TableCell className="font-medium truncate max-w-[300px]">
                             {result.fileName}
                           </TableCell>
-                          <TableCell>{formatSize(result.fileSize)}</TableCell>
+                          <TableCell>{formatSize(result.fileSize, unitSize)}</TableCell>
                           <TableCell className="text-green-500">{result.nbSeeders}</TableCell>
                           <TableCell className="text-red-500">{result.nbLeechers}</TableCell>
                           <TableCell className="text-muted-foreground truncate max-w-[150px]">
@@ -393,7 +390,7 @@ export function SearchView() {
                         </div>
                         <p className="font-medium text-xs break-words max-w-[240px]">{result.fileName}</p>
                         <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                          <span className="flex-shrink-0">{formatSize(result.fileSize)}</span>
+                          <span className="flex-shrink-0">{formatSize(result.fileSize, unitSize)}</span>
                           <span className="truncate">{result.siteUrl}</span>
                         </div>
 
@@ -401,7 +398,7 @@ export function SearchView() {
                           <div className="mt-1 pt-1 border-t space-y-1 text-[10px]">
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Size:</span>
-                              <span>{formatSize(result.fileSize)}</span>
+                              <span>{formatSize(result.fileSize, unitSize)}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Seeds:</span>
@@ -456,7 +453,7 @@ export function SearchView() {
             <div className="py-4">
               <p className="font-medium">{selectedResult.fileName}</p>
               <div className="text-sm text-muted-foreground mt-2 space-y-1">
-                <p>Size: {formatSize(selectedResult.fileSize)}</p>
+                <p>Size: {formatSize(selectedResult.fileSize, unitSize)}</p>
                 <p>Seeds: {selectedResult.nbSeeders} | Leechers: {selectedResult.nbLeechers}</p>
                 <p>Source: {selectedResult.siteUrl}</p>
               </div>
