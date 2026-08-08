@@ -36,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (newUsername: string, password: string) => {
     setIsLoading(true)
+    localStorage.setItem('qbit_user', newUsername)
     try {
       qbitClient.setCredentials(newUsername, password)
       const success = await qbitClient.login()
