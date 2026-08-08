@@ -56,6 +56,7 @@ import {
 	getStateColor,
 	getStateLabel,
 	getStoredTableSettings,
+	isForcedState,
 	isStoppedState,
 } from "@/helpers";
 import { columnsDictionary } from "@/constants";
@@ -314,10 +315,14 @@ export function TorrentsView() {
 				<span className="text-sm">{formatDate(torrent.added_on)}</span>
 			),
 			uploaded: (torrent) => (
-				<span className="text-sm">{formatSize(torrent.uploaded, sizeUnit)}</span>
+				<span className="text-sm">
+					{formatSize(torrent.uploaded, sizeUnit)}
+				</span>
 			),
 			uploaded_session: (torrent) => (
-				<span className="text-sm">{formatSize(torrent.uploaded_session, sizeUnit)}</span>
+				<span className="text-sm">
+					{formatSize(torrent.uploaded_session, sizeUnit)}
+				</span>
 			),
 			tracker: (torrent) => {
 				let host = torrent.tracker;
@@ -586,6 +591,7 @@ export function TorrentsView() {
 								<TableBody>
 									{paginatedTorrents.map((torrent) => {
 										const isActive = !isStoppedState(torrent.state);
+										const isForced = isForcedState(torrent.state);
 										return (
 											<TableRow
 												key={torrent.hash}
@@ -643,19 +649,20 @@ export function TorrentsView() {
 															variant="ghost"
 															size="icon"
 															className="h-8 w-8 mr-2"
+															disabled={isForced !== torrent.force_start}
 															onClick={() =>
 																forceStartMutation.mutate({
 																	hashes: [torrent.hash],
-																	forceStart: !torrent.force_start,
+																	forceStart: !isForced,
 																})
 															}
 															title={
-																torrent.force_start
+																isForced
 																	? "Disable Force Start"
 																	: "Enable Force Start"
 															}
 														>
-															{torrent.force_start ? (
+															{isForced ? (
 																<Rewind className="h-4 w-4" />
 															) : (
 																<FastForward className="h-4 w-4" />
@@ -720,6 +727,7 @@ export function TorrentsView() {
 			<div className="md:hidden space-y-1.5">
 				{paginatedTorrents.map((torrent) => {
 					const isActive = !isStoppedState(torrent.state);
+					const isForced = isForcedState(torrent.state);
 					const progressPct = Math.round(torrent.progress * 100);
 					const barColor =
 						torrent.state.includes("error") || torrent.state === "missingFiles"
@@ -830,6 +838,26 @@ export function TorrentsView() {
 										onClick={() => setDetailTorrent(torrent)}
 									>
 										<Eye className="h-3.5 w-3.5" />
+									</Button>
+									<Button
+										variant="ghost"
+										size="icon"
+										className="h-8 w-8 flex-shrink-0 rounded-full"
+										onClick={() =>
+											forceStartMutation.mutate({
+												hashes: [torrent.hash],
+												forceStart: !isForced,
+											})
+										}
+										title={
+											isForced ? "Disable Force Start" : "Enable Force Start"
+										}
+									>
+										{isForced ? (
+											<Rewind className="h-4 w-4" />
+										) : (
+											<FastForward className="h-4 w-4" />
+										)}
 									</Button>
 									<Button
 										variant="ghost"

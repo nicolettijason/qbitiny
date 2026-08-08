@@ -65,6 +65,7 @@ export function SettingsView() {
 				...defaultPreferences,
 				...prefs,
 				columns: getStoredTableSettings(),
+				sizeUnit: localStorage.getItem("qbitwebber_sizeUnit") || "B",
 				dl_limit:
 					prefs.dl_limit > 0
 						? Math.round(prefs.dl_limit / 1024)

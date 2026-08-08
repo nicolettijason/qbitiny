@@ -47,6 +47,10 @@ export function formatDate(timestampSeconds: number): string {
 	return `${jour}/${mois}/${annee} ${heures}:${minutes}:${secondes}`;
 }
 
+export function isForcedState(state: string): boolean {
+	return state.startsWith("forced");
+}
+
 export function isStoppedState(state: string): boolean {
 	return state.startsWith("paused") || state.startsWith("stopped");
 }
