@@ -99,7 +99,7 @@ class QBittorrentClient {
 
 	async logout(): Promise<void> {
 		this.sid = null;
-		await this.request("/api/v2/auth/logout");
+		await this.request("/api/v2/auth/logout", { method: "POST" });
 	}
 
 	async getAppVersion(): Promise<string> {
