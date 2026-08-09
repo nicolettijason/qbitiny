@@ -11,6 +11,7 @@ import {
 	FastForward,
 	Files,
 	Filter,
+	MoreVertical,
 	Pause,
 	Play,
 	Rewind,
@@ -916,99 +917,94 @@ export function TorrentsView() {
 													);
 												})}
 												<TableCell>
-													<div className="flex items-center gap-1">
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8"
-															onClick={() => setDetailTorrent(torrent)}
-															title="Details"
-														>
-															<Eye className="h-4 w-4" />
-														</Button>
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8 mr-2"
-															onClick={() =>
-																isActive
-																	? pauseMutation.mutate([torrent.hash])
-																	: resumeMutation.mutate([torrent.hash])
-															}
-														>
-															{isActive ? (
-																<Pause className="h-4 w-4" />
-															) : (
-																<Play className="h-4 w-4" />
-															)}
-														</Button>
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8 mr-2"
-															disabled={isForced !== torrent.force_start}
-															onClick={() =>
-																forceStartMutation.mutate({
-																	hashes: [torrent.hash],
-																	forceStart: !isForced,
-																})
-															}
-															title={
-																isForced
-																	? "Disable Force Start"
-																	: "Enable Force Start"
-															}
-														>
-															{isForced ? (
-																<Rewind className="h-4 w-4" />
-															) : (
-																<FastForward className="h-4 w-4" />
-															)}
-														</Button>
-
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8"
-															onClick={() => setFilesDialogTorrent(torrent)}
-														>
-															<Files className="h-4 w-4 mr-2" />
-														</Button>
-														<DropdownMenu>
-															<DropdownMenuTrigger asChild>
-																<Button
-																	variant="ghost"
-																	size="icon"
-																	className="h-8 w-8"
-																>
-																	<Trash2 className="h-4 w-4" />
-																</Button>
-															</DropdownMenuTrigger>
-															<DropdownMenuContent align="end">
-																<DropdownMenuItem
-																	onClick={() =>
-																		deleteMutation.mutate({
-																			hashes: [torrent.hash],
-																			deleteFiles: false,
-																		})
-																	}
-																>
-																	Delete
-																</DropdownMenuItem>
-																<DropdownMenuItem
-																	onClick={() =>
-																		deleteMutation.mutate({
-																			hashes: [torrent.hash],
-																			deleteFiles: true,
-																		})
-																	}
-																	className="text-destructive"
-																>
-																	Delete + Files
-																</DropdownMenuItem>
-															</DropdownMenuContent>
-														</DropdownMenu>
-													</div>
+													<DropdownMenu>
+														<DropdownMenuTrigger asChild>
+															<Button
+																variant="ghost"
+																size="icon"
+																className="h-8 w-8 focus-visible:outline-none focus-visible:ring-0"
+															>
+																<MoreVertical className="h-4 w-4" />
+															</Button>
+														</DropdownMenuTrigger>
+														<DropdownMenuContent align="end">
+															<DropdownMenuItem
+																onClick={() => setDetailTorrent(torrent)}
+															>
+																<Eye className="h-4 w-4 mr-2" />
+																Details
+															</DropdownMenuItem>
+															<DropdownMenuItem
+																onClick={() =>
+																	isActive
+																		? pauseMutation.mutate([torrent.hash])
+																		: resumeMutation.mutate([torrent.hash])
+																}
+															>
+																{isActive ? (
+																	<>
+																		<Pause className="h-4 w-4 mr-2" />
+																		Pause
+																	</>
+																) : (
+																	<>
+																		<Play className="h-4 w-4 mr-2" />
+																		Resume
+																	</>
+																)}
+															</DropdownMenuItem>
+															<DropdownMenuItem
+																onClick={() =>
+																	forceStartMutation.mutate({
+																		hashes: [torrent.hash],
+																		forceStart: !isForced,
+																	})
+																}
+															>
+																{isForced ? (
+																	<>
+																		<Rewind className="h-4 w-4 mr-2" />
+																		Disable Force Start
+																	</>
+																) : (
+																	<>
+																		<FastForward className="h-4 w-4 mr-2" />
+																		Force Start
+																	</>
+																)}
+															</DropdownMenuItem>
+															<DropdownMenuItem
+																onClick={() => setFilesDialogTorrent(torrent)}
+															>
+																<Files className="h-4 w-4 mr-2" />
+																Files
+															</DropdownMenuItem>
+															<div className="h-px bg-border my-1" />
+															<DropdownMenuItem
+																onClick={() =>
+																	deleteMutation.mutate({
+																		hashes: [torrent.hash],
+																		deleteFiles: false,
+																	})
+																}
+															>
+																<Trash2 className="h-4 w-4 mr-2" />
+																Delete
+															</DropdownMenuItem>
+															<DropdownMenuItem
+																onClick={() =>
+																	deleteMutation.mutate({
+																		hashes: [torrent.hash],
+																		deleteFiles: true,
+																	})
+																}
+																className="text-destructive"
+															>
+																<Trash2 className="h-4 w-4 mr-2" />
+																Delete + Files
+															</DropdownMenuItem>
+														</DropdownMenuContent>
+													</DropdownMenu>
 												</TableCell>
 											</TableRow>
 										);
