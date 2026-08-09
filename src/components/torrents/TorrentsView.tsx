@@ -10,6 +10,7 @@ import {
 	Eye,
 	FastForward,
 	Files,
+	Filter,
 	Pause,
 	Play,
 	Rewind,
@@ -63,7 +64,113 @@ import { columnsDictionary } from "@/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type SortDirection = "asc" | "desc";
+type TorrentStateFilter =
+	| "downloading"
+	| "seeding"
+	| "completed"
+	| "paused"
+	| "stopped"
+	| "error";
+
 const PAGE_SIZE = 20;
+
+const STATE_FILTERS: TorrentStateFilter[] = [
+	"downloading",
+	"seeding",
+	"completed",
+	"paused",
+	"stopped",
+	"error",
+];
+
+function toggleSetItem<T>(set: Set<T>, value: T): Set<T> {
+	const next = new Set(set);
+	if (next.has(value)) next.delete(value);
+	else next.add(value);
+	return next;
+}
+
+function getStateFilterLabel(state: TorrentStateFilter): string {
+	const labels: Record<TorrentStateFilter, string> = {
+		downloading: "Downloading",
+		seeding: "Seeding",
+		completed: "Completed",
+		paused: "Paused",
+		stopped: "Stopped",
+		error: "Error",
+	};
+	return labels[state];
+}
+
+function matchesTorrentState(
+	torrent: Torrent,
+	state: TorrentStateFilter,
+): boolean {
+	const torrentState = torrent.state;
+	const isCompleted = torrent.progress === 1;
+
+	switch (state) {
+		case "downloading":
+			return (
+				torrentState.includes("DL") ||
+				torrentState === "metaDL" ||
+				torrentState === "forcedMetaDL" ||
+				torrentState === "allocating"
+			);
+		case "seeding":
+			return torrentState.includes("UP") && !torrentState.includes("stopped");
+		case "completed":
+			return isCompleted;
+		case "paused":
+			return torrentState.startsWith("paused");
+		case "stopped":
+			return torrentState.startsWith("stopped");
+		case "error":
+			return torrentState === "error" || torrentState === "missingFiles";
+		default:
+			return false;
+	}
+}
+
+function matchesFilter(
+	torrent: Torrent,
+	selectedStates: Set<TorrentStateFilter>,
+	selectedCategories: Set<string>,
+	selectedTrackers: Set<string>,
+): boolean {
+	// Si aucun filtre n'est sélectionné, tout affiche
+	const hasStateFilter = selectedStates.size > 0;
+	const hasCategoryFilter = selectedCategories.size > 0;
+	const hasTrackerFilter = selectedTrackers.size > 0;
+
+	if (!hasStateFilter && !hasCategoryFilter && !hasTrackerFilter) {
+		return true;
+	}
+
+	// Vérifier chaque filtre actif
+	if (hasStateFilter) {
+		const stateMatches = Array.from(selectedStates).some((state) =>
+			matchesTorrentState(torrent, state),
+		);
+		if (!stateMatches) return false;
+	}
+
+	if (hasCategoryFilter) {
+		if (!selectedCategories.has(torrent.category || "")) return false;
+	}
+
+	if (hasTrackerFilter) {
+		let trackerHost = torrent.tracker;
+		try {
+			trackerHost = new URL(torrent.tracker).hostname || torrent.tracker;
+		} catch {
+			/* keep raw */
+		}
+		if (!selectedTrackers.has(trackerHost)) return false;
+	}
+
+	return true;
+}
 
 function SortButton({
 	field,
@@ -97,6 +204,47 @@ function SortButton({
 	);
 }
 
+// Checkbox is pointer-events-none: the row's onClick handles the toggle, avoiding a double-toggle bug
+function FilterCheckboxRow({
+	label,
+	checked,
+	onToggle,
+	badgeColor,
+}: {
+	label: string;
+	checked: boolean;
+	onToggle: () => void;
+	badgeColor?: string;
+}) {
+	return (
+		<div
+			className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer"
+			onClick={onToggle}
+		>
+			<Checkbox
+				checked={checked}
+				className="flex-shrink-0 pointer-events-none"
+			/>
+			{badgeColor ? (
+				<span
+					className="text-sm flex-1 rounded px-2 py-0.5"
+					style={{
+						backgroundColor: badgeColor,
+						color: "white",
+						fontSize: "0.75rem",
+					}}
+				>
+					{label}
+				</span>
+			) : (
+				<span className="text-sm flex-1 truncate">
+					{label || "no category"}
+				</span>
+			)}
+		</div>
+	);
+}
+
 export function TorrentsView() {
 	const { data: torrents, isLoading } = useTorrents();
 	const pauseMutation = usePauseTorrents();
@@ -116,18 +264,62 @@ export function TorrentsView() {
 		getStoredTableSettings(),
 	);
 	const [searchQuery, setSearchQuery] = useState("");
+	const [selectedStates, setSelectedStates] = useState<Set<TorrentStateFilter>>(
+		new Set(),
+	);
+	const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
+		new Set(),
+	);
+	const [selectedTrackers, setSelectedTrackers] = useState<Set<string>>(
+		new Set(),
+	);
+
+	function toggleFilter<T>(
+		setter: React.Dispatch<React.SetStateAction<Set<T>>>,
+		value: T,
+	) {
+		setter((prev) => toggleSetItem(prev, value));
+		setCurrentPage(1);
+	}
+
+	const totalActiveFilters =
+		selectedStates.size + selectedCategories.size + selectedTrackers.size;
 
 	const sizeUnit = useMemo(() => {
 		return localStorage.getItem("qbitwebber_sizeUnit") || "B";
 	}, []);
 
+	// Extraire les catégories et trackers uniques
+	const uniqueCategories = useMemo(() => {
+		const cats = new Set<string>(torrents?.map((t) => t.category) || []);
+		return Array.from(cats).sort();
+	}, [torrents]);
+
+	const uniqueTrackers = useMemo(() => {
+		const trackers = new Set<string>();
+		torrents?.forEach((t) => {
+			let host = t.tracker;
+			try {
+				host = new URL(t.tracker).hostname || t.tracker;
+			} catch {
+				/* keep raw */
+			}
+			if (host) trackers.add(host);
+		});
+		return Array.from(trackers).sort();
+	}, [torrents]);
+
 	function computeSortedTorrents() {
 		if (!torrents) return [];
-		const filtered = searchQuery.trim()
-			? torrents.filter((t) =>
-					t.name.toLowerCase().includes(searchQuery.toLowerCase()),
-				)
-			: torrents;
+		const filtered = torrents
+			.filter((t) =>
+				matchesFilter(t, selectedStates, selectedCategories, selectedTrackers),
+			)
+			.filter((t) =>
+				searchQuery.trim()
+					? t.name.toLowerCase().includes(searchQuery.toLowerCase())
+					: true,
+			);
 		return [...filtered].sort((a, b) => {
 			let cmp: number;
 
@@ -349,16 +541,22 @@ export function TorrentsView() {
 	if (isLoading)
 		return (
 			<div className="space-y-3">
-				{/* Search bar — disabled while loading */}
-				<div className="relative">
-					<Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-					<input
-						disabled
-						className="w-full pl-9 pr-8 py-2 text-sm rounded-md border border-input bg-muted text-muted-foreground cursor-not-allowed opacity-60"
-						placeholder="Filter torrents..."
-						value=""
-						onChange={() => {}}
-					/>
+				{/* Search bar with filter — disabled while loading */}
+				<div className="flex gap-2 items-center">
+					<div className="relative flex-1">
+						<Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+						<input
+							disabled
+							className="w-full h-10 pl-9 pr-8 py-2 text-sm rounded-md border border-input bg-muted text-muted-foreground cursor-not-allowed opacity-60"
+							placeholder="Filter torrents..."
+							value=""
+							onChange={() => {}}
+						/>
+					</div>
+					<Button variant="outline" disabled className="gap-2 h-10 px-3">
+						<Filter className="h-4 w-4" />
+						<span className="hidden sm:inline">Filtres</span>
+					</Button>
 				</div>
 				{/* Desktop skeleton table */}
 				<div className="hidden md:block">
@@ -467,26 +665,125 @@ export function TorrentsView() {
 
 	return (
 		<div className="space-y-3">
-			{/* Search bar */}
-			<div className="relative">
-				<Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-				<input
-					className="w-full pl-9 pr-8 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-					placeholder="Filter torrents..."
-					value={searchQuery}
-					onChange={(e) => {
-						setSearchQuery(e.target.value);
-						setCurrentPage(1);
-					}}
-				/>
-				{searchQuery && (
-					<button
-						className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-						onClick={() => setSearchQuery("")}
-					>
-						<X className="h-4 w-4" />
-					</button>
-				)}
+			{/* Search bar with filter */}
+			<div className="flex gap-2 items-center">
+				<div className="relative flex-1">
+					<Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+					<input
+						className="w-full h-10 pl-9 pr-8 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+						placeholder="Filter torrents..."
+						value={searchQuery}
+						onChange={(e) => {
+							setSearchQuery(e.target.value);
+							setCurrentPage(1);
+						}}
+					/>
+					{searchQuery && (
+						<button
+							className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+							onClick={() => setSearchQuery("")}
+						>
+							<X className="h-4 w-4" />
+						</button>
+					)}
+				</div>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild className="h-full">
+						<Button
+							variant="outline"
+							className="gap-2 h-10 px-3 focus-visible:outline-none focus-visible:ring-0"
+						>
+							<Filter className="h-4 w-4" />
+							<span className="hidden sm:inline">
+								{totalActiveFilters === 0
+									? "Filters"
+									: `${totalActiveFilters} filters`}
+							</span>
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end" className="w-64">
+						{/* State section */}
+						<div className="px-2 py-2">
+							<div className="text-xs font-semibold text-muted-foreground mb-2 px-2">
+								State
+							</div>
+							{STATE_FILTERS.map((state) => (
+								<FilterCheckboxRow
+									key={state}
+									label={getStateFilterLabel(state)}
+									checked={selectedStates.has(state)}
+									onToggle={() => toggleFilter(setSelectedStates, state)}
+								/>
+							))}
+						</div>
+
+						{uniqueCategories.length > 0 && (
+							<>
+								<div className="h-px bg-border my-2" />
+								<div className="px-2 py-2">
+									<div className="text-xs font-semibold text-muted-foreground mb-2 px-2">
+										Categories
+									</div>
+									{uniqueCategories.map((category) => (
+										<FilterCheckboxRow
+											key={category}
+											label={category}
+											checked={selectedCategories.has(category)}
+											onToggle={() =>
+												toggleFilter(setSelectedCategories, category)
+											}
+											badgeColor={generateTagColor(category)}
+										/>
+									))}
+								</div>
+							</>
+						)}
+
+						{uniqueTrackers.length > 0 && (
+							<>
+								<div className="h-px bg-border my-2" />
+								<div className="px-2 py-2">
+									<div className="text-xs font-semibold text-muted-foreground mb-2 px-2">
+										Trackers
+									</div>
+									<div className="max-h-40 overflow-y-auto">
+										{uniqueTrackers.map((tracker) => (
+											<FilterCheckboxRow
+												key={tracker}
+												label={tracker}
+												checked={selectedTrackers.has(tracker)}
+												onToggle={() =>
+													toggleFilter(setSelectedTrackers, tracker)
+												}
+											/>
+										))}
+									</div>
+								</div>
+							</>
+						)}
+
+						{totalActiveFilters > 0 && (
+							<>
+								<div className="h-px bg-border my-2" />
+								<div className="px-2 py-2">
+									<Button
+										variant="ghost"
+										size="sm"
+										className="w-full text-xs"
+										onClick={() => {
+											setSelectedStates(new Set());
+											setSelectedCategories(new Set());
+											setSelectedTrackers(new Set());
+											setCurrentPage(1);
+										}}
+									>
+										Reset filters
+									</Button>
+								</div>
+							</>
+						)}
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</div>
 
 			{selected.size > 0 && (
