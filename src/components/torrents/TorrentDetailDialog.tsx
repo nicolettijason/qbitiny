@@ -20,6 +20,7 @@ import {
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useStoragePreferences } from "@/hooks/useStoragePreferences";
 import {
 	formatDate,
 	formatSize,
@@ -116,6 +117,7 @@ export function TorrentDetailDialog({
 		null,
 	);
 	const [showMagnet, setShowMagnet] = useState(false);
+	const { sizeUnit } = useStoragePreferences();
 
 	if (!open || !torrent) return null;
 
@@ -137,8 +139,6 @@ export function TorrentDetailDialog({
 				.map((t) => t.trim())
 				.filter(Boolean)
 		: [];
-
-    const unitSize = localStorage.getItem("qbitwebber_sizeUnit") || "B";
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -247,7 +247,7 @@ export function TorrentDetailDialog({
 								label="Download"
 								value={
 									<span className="text-blue-500">
-										{formatSize(torrent.dlspeed, unitSize)}/s
+										{formatSize(torrent.dlspeed, sizeUnit)}/s
 									</span>
 								}
 							/>
@@ -256,7 +256,7 @@ export function TorrentDetailDialog({
 								label="Upload"
 								value={
 									<span className="text-green-500">
-										{formatSize(torrent.upspeed, unitSize)}/s
+										{formatSize(torrent.upspeed, sizeUnit)}/s
 									</span>
 								}
 							/>
@@ -277,17 +277,17 @@ export function TorrentDetailDialog({
 							<StatCard
 								icon={<HardDrive className="h-3 w-3" />}
 								label="Size"
-								value={formatSize(torrent.size, unitSize)}
+								value={formatSize(torrent.size, sizeUnit)}
 							/>
 							<StatCard
 								icon={<Download className="h-3 w-3" />}
 								label="Downloaded"
-								value={formatSize(torrent.downloaded, unitSize)}
+								value={formatSize(torrent.downloaded, sizeUnit)}
 							/>
 							<StatCard
 								icon={<Upload className="h-3 w-3" />}
 								label="Uploaded"
-								value={formatSize(torrent.uploaded, unitSize)}
+								value={formatSize(torrent.uploaded, sizeUnit)}
 							/>
 							<StatCard
 								icon={<TrendingUp className="h-3 w-3" />}
@@ -348,19 +348,19 @@ export function TorrentDetailDialog({
 								/>
 								<InfoRow
 									label="Avg DL speed"
-									value={`${formatSize(torrent.dl_speed_avg, unitSize)}/s`}
+									value={`${formatSize(torrent.dl_speed_avg, sizeUnit)}/s`}
 								/>
 								<InfoRow
 									label="Avg UP speed"
-									value={`${formatSize(torrent.up_speed_avg, unitSize)}/s`}
+									value={`${formatSize(torrent.up_speed_avg, sizeUnit)}/s`}
 								/>
 								<InfoRow
 									label="Downloaded"
-									value={formatSize(torrent.downloaded, unitSize)}
+									value={formatSize(torrent.downloaded, sizeUnit)}
 								/>
 								<InfoRow
 									label="Uploaded"
-									value={`${formatSize(torrent.uploaded, unitSize)} / session ${formatSize(torrent.uploaded_session, unitSize)}`}
+									value={`${formatSize(torrent.uploaded, sizeUnit)} / session ${formatSize(torrent.uploaded_session, sizeUnit)}`}
 								/>
 							</div>
 						</div>

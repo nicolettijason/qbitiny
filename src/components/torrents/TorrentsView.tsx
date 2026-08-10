@@ -49,6 +49,7 @@ import {
 	useDeleteTorrents,
 	useSetForceStart,
 } from "@/hooks/useApi";
+import { useStoragePreferences } from "@/hooks/useStoragePreferences";
 import type { Columns, ColumnsConfig, Torrent } from "@/types";
 import {
 	formatDate,
@@ -261,8 +262,9 @@ export function TorrentsView() {
 		null,
 	);
 	const [detailTorrent, setDetailTorrent] = useState<Torrent | null>(null);
+	const { sizeUnit, tableViewSettings } = useStoragePreferences();
 	const [tableSettings] = useState<ColumnsConfig>(() =>
-		getStoredTableSettings(),
+		getStoredTableSettings(tableViewSettings),
 	);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedStates, setSelectedStates] = useState<Set<TorrentStateFilter>>(
@@ -285,10 +287,6 @@ export function TorrentsView() {
 
 	const totalActiveFilters =
 		selectedStates.size + selectedCategories.size + selectedTrackers.size;
-
-	const sizeUnit = useMemo(() => {
-		return localStorage.getItem("qbitwebber_sizeUnit") || "B";
-	}, []);
 
 	// Extraire les catégories et trackers uniques
 	const uniqueCategories = useMemo(() => {

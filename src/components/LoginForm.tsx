@@ -4,11 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
+import { useStorage } from "@/contexts/StorageContext";
 
 export function LoginForm() {
-	const [username, setUsername] = useState(
-		localStorage.getItem("qbit_user") || "",
-	);
+	const storage = useStorage();
+	const [username, setUsername] = useState(storage.qbitUser);
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
 	const { login, isLoading } = useAuth();

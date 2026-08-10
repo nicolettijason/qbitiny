@@ -13,7 +13,7 @@ import type {
 
 import { demoClient } from "./demoClient";
 
-const DEFAULT_USER = localStorage.getItem("qbit_user") || "admin";
+const DEFAULT_USER = "admin";
 
 class QBittorrentClient {
 	private username: string;
@@ -28,7 +28,6 @@ class QBittorrentClient {
 	setCredentials(username: string, password: string) {
 		this.username = username;
 		this.password = password;
-		localStorage.setItem("qbit_user", username);
 		this.sid = null;
 	}
 
@@ -333,6 +332,7 @@ class QBittorrentClient {
 	}
 }
 
-export const qbitClient = import.meta.env.VITE_DEMO_MODE === "true"
+export const qbitClient =
+	import.meta.env.VITE_DEMO_MODE === "true"
 		? demoClient
 		: new QBittorrentClient();

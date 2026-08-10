@@ -1,16 +1,22 @@
 import { defaultPreferences } from "@/constants";
 
-export const getStoredTableSettings = () => {
-	const storedSettings =
-		localStorage.getItem("qbitwebber_tableViewSettings") ?? "{}";
-	const parsedSettings = JSON.parse(
-		storedSettings,
-	) as typeof defaultPreferences.columns;
-	return { ...defaultPreferences.columns, ...parsedSettings };
+/**
+ * Get stored table view settings (columns configuration)
+ * Now accepts settings as a parameter to work with context
+ */
+export const getStoredTableSettings = (
+	storedSettings: typeof defaultPreferences.columns,
+) => {
+	return { ...defaultPreferences.columns, ...storedSettings };
 };
 
+/**
+ * Format bytes to human-readable size
+ * @param bytes - Number of bytes
+ * @param sizeUnit - Size unit (defaults to 'B')
+ */
 export function formatSize(bytes: number, sizeUnit?: string): string {
-	sizeUnit = sizeUnit || localStorage.getItem("qbitwebber_sizeUnit") || "B";
+	sizeUnit = sizeUnit || "B";
 	if (!bytes) return `0 ${sizeUnit}`;
 	const k = 1024;
 	const sizes = [

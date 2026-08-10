@@ -23,6 +23,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { qbitClient } from "@/lib/api";
+import { useStorage } from "@/contexts/StorageContext";
 import { toast } from "sonner";
 import { Columns, Preferences } from "@/types";
 import {
@@ -42,6 +43,7 @@ import { Tooltip } from "radix-ui";
 
 export function SettingsView() {
 	const { theme, setTheme } = useTheme();
+	const storage = useStorage();
 	const [preferences, setPreferences] = useState(defaultPreferences);
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -64,8 +66,8 @@ export function SettingsView() {
 			setPreferences({
 				...defaultPreferences,
 				...prefs,
-				columns: getStoredTableSettings(),
-				sizeUnit: localStorage.getItem("qbitwebber_sizeUnit") || "B",
+				columns: getStoredTableSettings(storage.qbitwebberTableViewSettings),
+				sizeUnit: storage.qbitwebberSizeUnit || "B",
 				dl_limit:
 					prefs.dl_limit > 0
 						? Math.round(prefs.dl_limit / 1024)
@@ -93,10 +95,7 @@ export function SettingsView() {
 
 	const handleSaveTableSettings = () => {
 		try {
-			localStorage.setItem(
-				"qbitwebber_tableViewSettings",
-				JSON.stringify(preferences.columns),
-			);
+			storage.setQbitwebberTableViewSettings(preferences.columns);
 			toast.success("Table view settings saved");
 		} catch (error) {
 			console.error("Failed to save table view settings:", error);
@@ -107,7 +106,7 @@ export function SettingsView() {
 	const resetTableSettings = () => {
 		const defaultColumns = defaultPreferences.columns;
 		setPreferences((prev) => ({ ...prev, columns: defaultColumns }));
-		localStorage.removeItem("qbitwebber_tableViewSettings");
+		storage.setQbitwebberTableViewSettings(defaultColumns);
 		toast.success("Table view settings reset to default");
 	};
 
@@ -116,7 +115,7 @@ export function SettingsView() {
 		try {
 			const prefsToSave: Record<string, unknown> = {};
 
-			localStorage.setItem("qbitwebber_sizeUnit", preferences.sizeUnit);
+			storage.setQbitwebberSizeUnit(preferences.sizeUnit);
 
 			switch (section) {
 				case "table_view":

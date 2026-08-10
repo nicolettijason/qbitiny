@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useTransferInfo } from "@/hooks/useApi";
+import { useStoragePreferences } from "@/hooks/useStoragePreferences";
 import { formatSize } from "@/helpers";
 import { useTheme } from "next-themes";
 
@@ -33,10 +34,7 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 	const { logout } = useAuth();
 	const { data: transferInfo } = useTransferInfo();
 	const { theme, setTheme } = useTheme();
-
-	const unitSize = useMemo(() => {
-		return localStorage.getItem("qbitwebber_sizeUnit") || "B";
-	}, []);
+	const { sizeUnit } = useStoragePreferences();
 
 	const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
 		{
@@ -88,19 +86,19 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 								<div className="flex items-center gap-1 bg-muted/60 rounded px-2 py-1 text-[10px] sm:text-xs">
 									<span className="text-blue-500 font-bold">↓</span>
 									<span className="font-medium">
-										{formatSize(transferInfo.dl_info_speed, unitSize)}/s
+										{formatSize(transferInfo.dl_info_speed, sizeUnit)}/s
 									</span>
 									<span className="text-muted-foreground inline">
-										({formatSize(transferInfo.dl_info_data, unitSize)})
+										({formatSize(transferInfo.dl_info_data, sizeUnit)})
 									</span>
 								</div>
 								<div className="flex items-center gap-1 bg-muted/60 rounded text-[10px] sm:text-xs py-1 px-2">
 									<span className="text-green-500 font-bold">↑</span>
 									<span className="font-medium">
-										{formatSize(transferInfo.up_info_speed, unitSize)}/s
+										{formatSize(transferInfo.up_info_speed, sizeUnit)}/s
 									</span>
 									<span className="text-muted-foreground inline">
-										({formatSize(transferInfo.up_info_data, unitSize)})
+										({formatSize(transferInfo.up_info_data, sizeUnit)})
 									</span>
 								</div>
 							</div>

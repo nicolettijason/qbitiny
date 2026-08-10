@@ -16,7 +16,6 @@ class DemoQBittorrentClient {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	setCredentials(username: string, _password: string) {
 		this.username = username;
-		localStorage.setItem("qbit_user", username);
 	}
 
 	getUsername() {
