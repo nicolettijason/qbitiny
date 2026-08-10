@@ -40,10 +40,18 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Tooltip } from "radix-ui";
+import { useStoragePreferences } from "@/hooks/useStoragePreferences";
 
 export function SettingsView() {
 	const { theme, setTheme } = useTheme();
-	const storage = useStorage();
+	const {
+		interactiveTabTitle,
+		setInteractiveTabTitle,
+		sizeUnit,
+		setSizeUnit,
+		tableViewSettings,
+		setTableViewSettings,
+	} = useStoragePreferences();
 	const [preferences, setPreferences] = useState(defaultPreferences);
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -66,8 +74,8 @@ export function SettingsView() {
 			setPreferences({
 				...defaultPreferences,
 				...prefs,
-				columns: getStoredTableSettings(storage.qbitwebberTableViewSettings),
-				sizeUnit: storage.qbitwebberSizeUnit || "B",
+				columns: getStoredTableSettings(tableViewSettings),
+				sizeUnit: sizeUnit || "B",
 				dl_limit:
 					prefs.dl_limit > 0
 						? Math.round(prefs.dl_limit / 1024)
@@ -95,7 +103,7 @@ export function SettingsView() {
 
 	const handleSaveTableSettings = () => {
 		try {
-			storage.setQbitwebberTableViewSettings(preferences.columns);
+			setTableViewSettings(preferences.columns);
 			toast.success("Table view settings saved");
 		} catch (error) {
 			console.error("Failed to save table view settings:", error);
@@ -106,7 +114,7 @@ export function SettingsView() {
 	const resetTableSettings = () => {
 		const defaultColumns = defaultPreferences.columns;
 		setPreferences((prev) => ({ ...prev, columns: defaultColumns }));
-		storage.setQbitwebberTableViewSettings(defaultColumns);
+		setTableViewSettings(defaultColumns);
 		toast.success("Table view settings reset to default");
 	};
 
@@ -115,7 +123,7 @@ export function SettingsView() {
 		try {
 			const prefsToSave: Record<string, unknown> = {};
 
-			storage.setQbitwebberSizeUnit(preferences.sizeUnit);
+			setSizeUnit(preferences.sizeUnit);
 
 			switch (section) {
 				case "table_view":
@@ -546,13 +554,14 @@ export function SettingsView() {
 							<div className="flex items-center space-x-2 mt-4">
 								<Checkbox
 									id="interactive_tab_title"
-									checked={storage.qbitwebberInteractiveTabTitle}
+									checked={interactiveTabTitle}
 									onCheckedChange={(checked) =>
-										storage.setQbitwebberInteractiveTabTitle(!!checked)
+										setInteractiveTabTitle(!!checked)
 									}
 								/>
 								<Label htmlFor="interactive_tab_title">
-									Interactive tab title (shows download/upload speeds in the browser tab)
+									Interactive tab title (shows download/upload speeds in the
+									browser tab)
 								</Label>
 							</div>
 						</CardContent>
