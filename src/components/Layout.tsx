@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
 	Download,
 	Server,
@@ -32,9 +32,9 @@ interface LayoutProps {
 export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const { logout } = useAuth();
-	const { data: transferInfo } = useTransferInfo();
 	const { theme, setTheme } = useTheme();
-	const { sizeUnit } = useStoragePreferences();
+	const { sizeUnit, interactiveTabTitle } = useStoragePreferences();
+	const { data: transferInfo } = useTransferInfo(interactiveTabTitle);
 
 	const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
 		{
@@ -52,6 +52,24 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 			icon: <Settings className="h-5 w-5" />,
 		},
 	];
+
+	const transferInfoData = useMemo(() => {
+		if (!transferInfo) return null;
+		return {
+			dlSpeed: formatSize(transferInfo.dl_info_speed, sizeUnit) + "/s",
+			dlData: formatSize(transferInfo.dl_info_data, sizeUnit),
+			upSpeed: formatSize(transferInfo.up_info_speed, sizeUnit) + "/s",
+			upData: formatSize(transferInfo.up_info_data, sizeUnit),
+		};
+	}, [transferInfo, sizeUnit]);
+
+	useEffect(() => {
+		if (interactiveTabTitle) {
+			document.title = `DL: ${transferInfoData?.dlSpeed || "-"} | UP: ${transferInfoData?.upSpeed || "-"}`;
+		} else {
+			document.title = "qBittorrent";
+		}
+	}, [interactiveTabTitle, transferInfoData]);
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -86,19 +104,19 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 								<div className="flex items-center gap-1 bg-muted/60 rounded px-2 py-1 text-[10px] sm:text-xs">
 									<span className="text-blue-500 font-bold">↓</span>
 									<span className="font-medium">
-										{formatSize(transferInfo.dl_info_speed, sizeUnit)}/s
+										{transferInfoData?.dlSpeed}
 									</span>
 									<span className="text-muted-foreground inline">
-										({formatSize(transferInfo.dl_info_data, sizeUnit)})
+										({transferInfoData?.dlData})
 									</span>
 								</div>
 								<div className="flex items-center gap-1 bg-muted/60 rounded text-[10px] sm:text-xs py-1 px-2">
 									<span className="text-green-500 font-bold">↑</span>
 									<span className="font-medium">
-										{formatSize(transferInfo.up_info_speed, sizeUnit)}/s
+										{transferInfoData?.upSpeed}
 									</span>
 									<span className="text-muted-foreground inline">
-										({formatSize(transferInfo.up_info_data, sizeUnit)})
+										({transferInfoData?.upData})
 									</span>
 								</div>
 							</div>

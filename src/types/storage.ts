@@ -6,6 +6,7 @@ export interface StorageValue {
 	qbitUser: string;
 	qbitPass: string;
 	qbitwebberSizeUnit: string;
+  qbitwebberInteractiveTabTitle: boolean;
 	qbitwebberTableViewSettings: Record<string, unknown>;
 }
 

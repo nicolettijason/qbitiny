@@ -9,6 +9,8 @@ export function useStoragePreferences() {
 	return {
 		sizeUnit: storage.qbitwebberSizeUnit,
 		setSizeUnit: storage.setQbitwebberSizeUnit,
+	interactiveTabTitle: storage.qbitwebberInteractiveTabTitle,
+	setInteractiveTabTitle: storage.setQbitwebberInteractiveTabTitle,
 		tableViewSettings: storage.qbitwebberTableViewSettings,
 		setTableViewSettings: storage.setQbitwebberTableViewSettings,
 	};

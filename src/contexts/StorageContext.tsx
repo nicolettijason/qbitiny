@@ -16,6 +16,7 @@ const STORAGE_KEYS: Record<StorageKey, string> = {
 	qbitUser: "qbit_user",
 	qbitPass: "qbit_pass",
 	qbitwebberSizeUnit: "qbitwebber_sizeUnit",
+	qbitwebberInteractiveTabTitle: "qbitwebber_interactiveTabTitle",
 	qbitwebberTableViewSettings: "qbitwebber_tableViewSettings",
 };
 
@@ -30,6 +31,9 @@ interface StorageContextType {
 	// Preferences
 	qbitwebberSizeUnit: string;
 	setQbitwebberSizeUnit: (value: string) => void;
+
+	qbitwebberInteractiveTabTitle: boolean;
+	setQbitwebberInteractiveTabTitle: (value: boolean) => void;
 
 	qbitwebberTableViewSettings: typeof defaultPreferences.columns;
 	setQbitwebberTableViewSettings: (
@@ -47,6 +51,8 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 	// Preferences states
 	const [qbitwebberSizeUnit, setQbitwebberSizeUnitState] =
 		useState<string>("B");
+	const [qbitwebberInteractiveTabTitle, setQbitwebberInteractiveTabTitleState] =
+		useState<boolean>(false);
 	const [qbitwebberTableViewSettings, setQbitwebberTableViewSettingsState] =
 		useState(defaultPreferences.columns);
 
@@ -71,6 +77,13 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 				} catch (e) {
 					console.error("Failed to parse table view settings:", e);
 				}
+			}
+
+			const interactiveTabTitle = localStorage.getItem(
+				STORAGE_KEYS.qbitwebberInteractiveTabTitle,
+			);
+			if (interactiveTabTitle) {
+				setQbitwebberInteractiveTabTitleState(interactiveTabTitle === "true");
 			}
 		} catch (error) {
 			console.error("Error initializing storage:", error);
@@ -123,6 +136,21 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 		[],
 	);
 
+	const setQbitwebberInteractiveTabTitle = useCallback((value: boolean) => {
+		setQbitwebberInteractiveTabTitleState(value);
+		try {
+			localStorage.setItem(
+				STORAGE_KEYS.qbitwebberInteractiveTabTitle,
+				value.toString(),
+			);
+		} catch (error) {
+			console.error(
+				"Error saving qbitwebberInteractiveTabTitle to storage:",
+				error,
+			);
+		}
+	}, []);
+
 	const value: StorageContextType = {
 		qbitUser,
 		setQbitUser,
@@ -130,6 +158,8 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 		setQbitPass,
 		qbitwebberSizeUnit,
 		setQbitwebberSizeUnit,
+		qbitwebberInteractiveTabTitle,
+		setQbitwebberInteractiveTabTitle,
 		qbitwebberTableViewSettings,
 		setQbitwebberTableViewSettings,
 	};

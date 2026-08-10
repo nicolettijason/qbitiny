@@ -518,7 +518,7 @@ export function SettingsView() {
 						<CardHeader>
 							<CardTitle>Appearance</CardTitle>
 							<CardDescription>
-								Toggle between light and dark mode
+								Configure appearance settings for qbitiny
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
@@ -542,6 +542,18 @@ export function SettingsView() {
 										</>
 									)}
 								</Button>
+							</div>
+							<div className="flex items-center space-x-2 mt-4">
+								<Checkbox
+									id="interactive_tab_title"
+									checked={storage.qbitwebberInteractiveTabTitle}
+									onCheckedChange={(checked) =>
+										storage.setQbitwebberInteractiveTabTitle(!!checked)
+									}
+								/>
+								<Label htmlFor="interactive_tab_title">
+									Interactive tab title (shows download/upload speeds in the browser tab)
+								</Label>
 							</div>
 						</CardContent>
 					</Card>
