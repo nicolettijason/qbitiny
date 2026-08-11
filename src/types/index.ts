@@ -108,16 +108,59 @@ export interface TorrentFile {
 
 export type FilePriority = 0 | 1 | 2 | 7;
 
+export interface TrackerEndpoint {
+	bt_version: number;
+	min_announce: number;
+	msg: string;
+	name: string;
+	next_announce: number;
+	num_downloaded: number;
+	num_leeches: number;
+	num_peers: number;
+	num_seeds: number;
+	status: TrackerStatus;
+	updating: boolean;
+}
+
 export interface TorrentTracker {
 	url: string;
 	status: TrackerStatus;
 	tier: number;
+	msg: string;
 	num_peers: number;
 	num_seeds: number;
-	num_leechers: number;
+	num_leeches: number;
 	num_downloaded: number;
-	last_error: string;
-	msg: string;
+	min_announce: number;
+	next_announce: number;
+	updating: boolean;
+	endpoints: TrackerEndpoint[];
+}
+export interface TorrentPeer {
+	client: string;
+	connection: string; // ex: "BT", "web", "uTP"...
+	country?: string;
+	country_code?: string;
+	dl_speed: number;
+	downloaded: number;
+	files: string;
+	flags: string;
+	flags_desc: string;
+	host_name: string;
+	ip: string;
+	peer_id_client: string;
+	port: number;
+	progress: number;
+	relevance: number;
+	up_speed: number;
+	uploaded: number;
+}
+
+export interface TorrentPeersResponse {
+	rid: number;
+	full_update?: boolean;
+	peers?: Record<string, TorrentPeer>; // clé = "ip:port"
+	peers_removed?: string[]; // pairs déconnectés depuis le dernier rid
 }
 
 export type TrackerStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6;

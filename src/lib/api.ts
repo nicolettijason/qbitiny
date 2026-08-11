@@ -9,6 +9,7 @@ import type {
 	SearchResult,
 	LogEntry,
 	TransferInfo,
+	TorrentPeersResponse,
 } from "@/types";
 
 import { demoClient } from "./demoClient";
@@ -142,12 +143,14 @@ class QBittorrentClient {
 		return this.request<Torrent[]>(url);
 	}
 
-	async getTorrentProperties(hash: string): Promise<Torrent> {
-		return this.request<Torrent>(`/api/v2/torrents/properties?hash=${hash}`);
-	}
-
 	async getTorrentFiles(hash: string): Promise<TorrentFile[]> {
 		return this.request<TorrentFile[]>(`/api/v2/torrents/files?hash=${hash}`);
+	}
+
+	async getTorrentPeers(hash: string): Promise<TorrentPeersResponse> {
+		return this.request<TorrentPeersResponse>(
+			`/api/v2/sync/torrentPeers?hash=${hash}`,
+		);
 	}
 
 	async setFilePriority(

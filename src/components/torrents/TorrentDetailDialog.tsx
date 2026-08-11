@@ -13,6 +13,7 @@ import {
 	Trash2,
 	TrendingUp,
 	Upload,
+	UserRound,
 	Users,
 	X,
 	Zap,
@@ -31,6 +32,7 @@ import {
 	isStoppedState,
 } from "@/helpers";
 import type { Torrent } from "@/types";
+import { useTorrentPeers } from "@/hooks/useApi";
 
 interface TorrentDetailDialogProps {
 	torrent: Torrent | null;
@@ -117,7 +119,13 @@ export function TorrentDetailDialog({
 		null,
 	);
 	const [showMagnet, setShowMagnet] = useState(false);
+	const [showPeers, setShowPeers] = useState(false);
 	const { sizeUnit } = useStoragePreferences();
+
+	const { data: peersInfo, isLoading: peersLoading } = useTorrentPeers(
+		torrent?.hash || "",
+		showPeers,
+	);
 
 	if (!open || !torrent) return null;
 
@@ -363,6 +371,71 @@ export function TorrentDetailDialog({
 									value={`${formatSize(torrent.uploaded, sizeUnit)} / session ${formatSize(torrent.uploaded_session, sizeUnit)}`}
 								/>
 							</div>
+						</div>
+
+						<div className="rounded-lg border border-border/60 overflow-hidden">
+							<button
+								className="w-full px-3 py-2 bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground font-medium flex items-center justify-between hover:bg-muted/60 transition-colors"
+								onClick={() => setShowPeers((v) => !v)}
+							>
+								<span className="flex items-center gap-1.5">
+									<UserRound className="h-3 w-3" />
+									Peers
+								</span>
+								{showPeers ? (
+									<ChevronUp className="h-3 w-3" />
+								) : (
+									<ChevronDown className="h-3 w-3" />
+								)}
+							</button>
+							{showPeers && (
+								<>
+									<div className="px-3 py-2 border-b border-b-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+										{peersInfo?.peers ? (
+											<div className="flex items-center justify-between">
+												<span className="w-1/3">IP</span>
+												<span className="w-1/3">Port</span>
+												<span className="w-1/3">DL Speed</span>
+											</div>
+										) : (
+											<span>Peers</span>
+										)}
+									</div>
+									<div className="px-3 py-2">
+										{peersLoading ? (
+											<p className="text-[10px] text-muted-foreground">
+												Loading peers...
+											</p>
+										) : peersInfo?.peers ? (
+											<div className="space-y-1">
+												{Object.entries(peersInfo.peers).map(
+													([index, peer]) => (
+														<div
+															key={index}
+															className="flex items-center justify-between text-[10px] text-muted-foreground"
+														>
+															<span className="truncate w-1/3">
+																<span
+																	className={`fi fi-${peer.country_code?.toLowerCase()} mr-1`}
+																></span>
+																{peer.ip}
+															</span>
+															<span className="w-1/3">{peer.port}</span>
+															<span className="w-1/3">
+																{formatSize(peer.dl_speed, sizeUnit)}/s
+															</span>
+														</div>
+													),
+												)}
+											</div>
+										) : (
+											<p className="text-[10px] text-muted-foreground">
+												No peers found.
+											</p>
+										)}
+									</div>
+								</>
+							)}
 						</div>
 
 						{/* Magnet link (collapsible) */}

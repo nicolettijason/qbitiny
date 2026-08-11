@@ -45,6 +45,15 @@ export function useTorrentTrackers(hash: string) {
 	});
 }
 
+export function useTorrentPeers(hash: string, isEnabled = true) {
+	return useQuery({
+		queryKey: ["torrent", hash, "peers"],
+		queryFn: () => qbitClient.getTorrentPeers(hash),
+		enabled: isEnabled && !!hash && !!qbitClient.isConfigured(),
+		refetchInterval: 5000,
+	});
+}
+
 export function useAddTorrent() {
 	const queryClient = useQueryClient();
 

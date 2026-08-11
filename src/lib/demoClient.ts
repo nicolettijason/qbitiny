@@ -7,6 +7,7 @@ import type {
 	SearchResult,
 	LogEntry,
 	TransferInfo,
+	TorrentPeersResponse,
 } from "@/types";
 
 class DemoQBittorrentClient {
@@ -289,10 +290,31 @@ class DemoQBittorrentClient {
 		];
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	async getTorrentProperties(_hash: string): Promise<Torrent> {
-		const torrents = await this.getTorrents();
-		return torrents[0];
+	async getTorrentPeers(hash: string): Promise<TorrentPeersResponse> {
+		return {
+			rid: 0,
+			peers: {
+				"62.34.210.30:30271": {
+					client: "",
+					connection: "μTP",
+					country: "France",
+					country_code: "fr",
+					dl_speed: 0,
+					downloaded: 0,
+					files: "",
+					flags: "P",
+					flags_desc: "P = μTP",
+					host_name: "",
+					ip: "62.34.210.30",
+					peer_id_client: "",
+					port: 30271,
+					progress: 0,
+					relevance: 0,
+					up_speed: 0,
+					uploaded: 0,
+				},
+			},
+		};
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -353,9 +375,12 @@ class DemoQBittorrentClient {
 				tier: 0,
 				num_peers: 50,
 				num_seeds: 100,
-				num_leechers: 25,
+				num_leeches: 25,
 				num_downloaded: 1000,
-				last_error: "",
+				min_announce: 300,
+				next_announce: 1672531200,
+				updating: false,
+				endpoints: [],
 				msg: "OK",
 			},
 			{
@@ -364,9 +389,26 @@ class DemoQBittorrentClient {
 				tier: 1,
 				num_peers: 0,
 				num_seeds: 0,
-				num_leechers: 0,
+				num_leeches: 0,
 				num_downloaded: 0,
-				last_error: "Connection timed out",
+				min_announce: 600,
+				next_announce: 1672534800,
+				updating: true,
+				endpoints: [
+					{
+						bt_version: 1,
+						min_announce: 600,
+						msg: "Endpoint 1 OK",
+						name: "Endpoint 1",
+						next_announce: 1672534800,
+						num_downloaded: 0,
+						num_leeches: 0,
+						num_peers: 0,
+						num_seeds: 0,
+						status: 2,
+						updating: true,
+					},
+				],
 				msg: "",
 			},
 		];
