@@ -37,11 +37,12 @@ export function useTorrentFiles(hash: string | null) {
 	});
 }
 
-export function useTorrentTrackers(hash: string) {
+export function useTorrentTrackers(hash: string, isEnabled = true) {
 	return useQuery({
 		queryKey: ["torrent", hash, "trackers"],
 		queryFn: () => qbitClient.getTorrentTrackers(hash),
-		enabled: !!hash && !!qbitClient.isConfigured(),
+		enabled: isEnabled && !!hash && !!qbitClient.isConfigured(),
+		refetchInterval: 5000,
 	});
 }
 

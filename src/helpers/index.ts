@@ -39,6 +39,13 @@ export function formatTime(seconds: number): string {
 	return `${Math.floor(seconds / 86400)}d`;
 }
 
+export function formatNextAnnounce(timestampSeconds: number): string {
+	if (!timestampSeconds) return "—";
+	const diff = timestampSeconds - Math.floor(Date.now() / 1000);
+	if (diff <= 0) return "Now";
+	return formatTime(diff);
+}
+
 export function formatDate(timestampSeconds: number): string {
 	const date = new Date(timestampSeconds * 1000);
 	const pad = (n: number) => String(n).padStart(2, "0");
@@ -108,6 +115,32 @@ export function getStateLabel(state: string, completedOn: number) {
 	};
 
 	return labels[state] || state;
+}
+
+export function getTrackerStatusLabel(status: number): string {
+	const labels: Record<number, string> = {
+		0: "Disabled",
+		1: "Not contacted",
+		2: "Working",
+		3: "Updating",
+		4: "Not working",
+	};
+	return labels[status] ?? "Unknown";
+}
+
+export function getTrackerStatusColor(status: number): string {
+	switch (status) {
+		case 2:
+			return "text-green-500";
+		case 3:
+			return "text-blue-500";
+		case 1:
+			return "text-yellow-500";
+		case 4:
+			return "text-red-500";
+		default:
+			return "text-muted-foreground";
+	}
 }
 
 export const generateTagColor = (tag?: string) => {

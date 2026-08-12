@@ -10,6 +10,7 @@ import {
 	Pause,
 	Play,
 	Rewind,
+	Server,
 	Trash2,
 	TrendingUp,
 	Upload,
@@ -24,15 +25,18 @@ import { Button } from "@/components/ui/button";
 import { useStoragePreferences } from "@/hooks/useStoragePreferences";
 import {
 	formatDate,
+	formatNextAnnounce,
 	formatSize,
 	formatTime,
 	generateTagColor,
 	getStateColor,
 	getStateLabel,
+	getTrackerStatusColor,
+	getTrackerStatusLabel,
 	isStoppedState,
 } from "@/helpers";
-import type { Torrent } from "@/types";
-import { useTorrentPeers } from "@/hooks/useApi";
+import type { Torrent, TorrentTracker, TrackerEndpoint } from "@/types";
+import { useTorrentPeers, useTorrentTrackers } from "@/hooks/useApi";
 
 interface TorrentDetailDialogProps {
 	torrent: Torrent | null;
@@ -105,6 +109,187 @@ function InfoRow({
 	);
 }
 
+function TrackerStatBadges({
+	tier,
+	status,
+	seeds,
+	peers,
+	leech,
+	down,
+	next,
+}: {
+	tier?: number;
+	status: number;
+	seeds: number;
+	peers: number;
+	leech: number;
+	down: number;
+	next: string;
+}) {
+	return (
+		<div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[9px] text-muted-foreground/80">
+			{tier !== undefined && (
+				<span>
+					Tier <span className="text-muted-foreground">{tier}</span>
+				</span>
+			)}
+			<span className={getTrackerStatusColor(status)}>
+				{getTrackerStatusLabel(status)}
+			</span>
+			<span>
+				S <span className="text-muted-foreground">{seeds >= 0 ? seeds : "—"}</span>
+			</span>
+			<span>
+				P <span className="text-muted-foreground">{peers >= 0 ? peers : "—"}</span>
+			</span>
+			<span>
+				L <span className="text-muted-foreground">{leech >= 0 ? leech : "—"}</span>
+			</span>
+			<span>
+				D <span className="text-muted-foreground">{down >= 0 ? down : "—"}</span>
+			</span>
+			<span>
+				Next <span className="text-muted-foreground">{next}</span>
+			</span>
+		</div>
+	);
+}
+
+function EndpointRow({ endpoint }: { endpoint: TrackerEndpoint }) {
+	const nextLabel = formatNextAnnounce(endpoint.next_announce);
+
+	return (
+		<div
+			className="text-[10px] text-muted-foreground/80"
+			title={endpoint.msg || endpoint.name}
+		>
+			{/* Desktop row */}
+			<div className="hidden sm:flex items-center gap-2">
+				<span className="flex-1 truncate">
+					{endpoint.name}
+					<span className="text-muted-foreground/50"> · v{endpoint.bt_version}</span>
+				</span>
+				<span className="w-9 text-center">—</span>
+				<span
+					className={`w-24 text-center truncate ${getTrackerStatusColor(endpoint.status)}`}
+				>
+					{getTrackerStatusLabel(endpoint.status)}
+				</span>
+				<span className="w-10 text-center">
+					{endpoint.num_seeds >= 0 ? endpoint.num_seeds : "—"}
+				</span>
+				<span className="w-10 text-center">
+					{endpoint.num_peers >= 0 ? endpoint.num_peers : "—"}
+				</span>
+				<span className="w-10 text-center">
+					{endpoint.num_leeches >= 0 ? endpoint.num_leeches : "—"}
+				</span>
+				<span className="w-14 text-right">
+					{endpoint.num_downloaded >= 0 ? endpoint.num_downloaded : "—"}
+				</span>
+				<span className="w-16 text-right">{nextLabel}</span>
+			</div>
+			{/* Mobile card */}
+			<div className="flex sm:hidden flex-col gap-0.5 py-1">
+				<span className="truncate">
+					{endpoint.name}
+					<span className="text-muted-foreground/50"> · v{endpoint.bt_version}</span>
+				</span>
+				<TrackerStatBadges
+					status={endpoint.status}
+					seeds={endpoint.num_seeds}
+					peers={endpoint.num_peers}
+					leech={endpoint.num_leeches}
+					down={endpoint.num_downloaded}
+					next={nextLabel}
+				/>
+			</div>
+		</div>
+	);
+}
+
+function TrackerRow({ tracker }: { tracker: TorrentTracker }) {
+	const [expanded, setExpanded] = useState(false);
+	const hasEndpoints = tracker.endpoints && tracker.endpoints.length > 0;
+	const nextLabel = formatNextAnnounce(tracker.next_announce);
+
+	return (
+		<div>
+			<div
+				className={hasEndpoints ? "cursor-pointer" : ""}
+				title={tracker.msg || tracker.url}
+				onClick={hasEndpoints ? () => setExpanded((v) => !v) : undefined}
+			>
+				{/* Desktop row */}
+				<div className="hidden sm:flex items-center gap-2 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+					<span className="w-3 flex-shrink-0 flex items-center justify-center">
+						{hasEndpoints ? (
+							expanded ? (
+								<ChevronUp className="h-2.5 w-2.5" />
+							) : (
+								<ChevronDown className="h-2.5 w-2.5" />
+							)
+						) : null}
+					</span>
+					<span className="flex-1 truncate">{tracker.url}</span>
+					<span className="w-9 text-center">
+						{tracker.tier >= 0 ? tracker.tier : "—"}
+					</span>
+					<span
+						className={`w-24 text-center truncate ${getTrackerStatusColor(tracker.status)}`}
+					>
+						{getTrackerStatusLabel(tracker.status)}
+					</span>
+					<span className="w-10 text-center">
+						{tracker.num_seeds >= 0 ? tracker.num_seeds : "—"}
+					</span>
+					<span className="w-10 text-center">
+						{tracker.num_peers >= 0 ? tracker.num_peers : "—"}
+					</span>
+					<span className="w-10 text-center">
+						{tracker.num_leeches >= 0 ? tracker.num_leeches : "—"}
+					</span>
+					<span className="w-14 text-right">
+						{tracker.num_downloaded >= 0 ? tracker.num_downloaded : "—"}
+					</span>
+					<span className="w-16 text-right">{nextLabel}</span>
+				</div>
+				{/* Mobile card */}
+				<div className="flex sm:hidden flex-col gap-0.5 py-1.5 border-b border-border/30 last:border-0 text-muted-foreground hover:text-foreground transition-colors">
+					<div className="flex items-center gap-1.5">
+						<span className="w-3 flex-shrink-0 flex items-center justify-center">
+							{hasEndpoints ? (
+								expanded ? (
+									<ChevronUp className="h-2.5 w-2.5" />
+								) : (
+									<ChevronDown className="h-2.5 w-2.5" />
+								)
+							) : null}
+						</span>
+						<span className="flex-1 truncate text-[10px]">{tracker.url}</span>
+					</div>
+					<TrackerStatBadges
+						tier={tracker.tier >= 0 ? tracker.tier : undefined}
+						status={tracker.status}
+						seeds={tracker.num_seeds}
+						peers={tracker.num_peers}
+						leech={tracker.num_leeches}
+						down={tracker.num_downloaded}
+						next={nextLabel}
+					/>
+				</div>
+			</div>
+			{expanded && hasEndpoints && (
+				<div className="ml-5 mt-1 mb-1.5 space-y-1.5 sm:space-y-1 border-l border-border/40 pl-2">
+					{tracker.endpoints.map((endpoint, idx) => (
+						<EndpointRow key={`${endpoint.name}-${idx}`} endpoint={endpoint} />
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
+
 export function TorrentDetailDialog({
 	torrent,
 	open,
@@ -120,12 +305,15 @@ export function TorrentDetailDialog({
 	);
 	const [showMagnet, setShowMagnet] = useState(false);
 	const [showPeers, setShowPeers] = useState(false);
+	const [showTrackers, setShowTrackers] = useState(false);
 	const { sizeUnit } = useStoragePreferences();
 
 	const { data: peersInfo, isLoading: peersLoading } = useTorrentPeers(
 		torrent?.hash || "",
 		showPeers,
 	);
+	const { data: trackersInfo, isLoading: trackersLoading } =
+		useTorrentTrackers(torrent?.hash || "", showTrackers);
 
 	if (!open || !torrent) return null;
 
@@ -371,6 +559,68 @@ export function TorrentDetailDialog({
 									value={`${formatSize(torrent.uploaded, sizeUnit)} / session ${formatSize(torrent.uploaded_session, sizeUnit)}`}
 								/>
 							</div>
+						</div>
+
+						<div className="rounded-lg border border-border/60 overflow-hidden">
+							<button
+								className="w-full px-3 py-2 bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground font-medium flex items-center justify-between hover:bg-muted/60 transition-colors"
+								onClick={() => setShowTrackers((v) => !v)}
+							>
+								<span className="flex items-center gap-1.5">
+									<Server className="h-3 w-3" />
+									Trackers
+								</span>
+								{showTrackers ? (
+									<ChevronUp className="h-3 w-3" />
+								) : (
+									<ChevronDown className="h-3 w-3" />
+								)}
+							</button>
+							{showTrackers && (
+								<div className="overflow-x-auto">
+									<div className="px-3 py-2 border-b border-b-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+										<span className="sm:hidden">
+											Trackers
+											{trackersInfo && trackersInfo.length > 0
+												? ` (${trackersInfo.length})`
+												: ""}
+										</span>
+										{trackersInfo && trackersInfo.length > 0 && (
+											<div className="hidden sm:flex items-center gap-2 min-w-[500px]">
+												<span className="w-3 flex-shrink-0" />
+												<span className="flex-1">URL</span>
+												<span className="w-9 text-center">Tier</span>
+												<span className="w-24 text-center">Status</span>
+												<span className="w-10 text-center">Seeds</span>
+												<span className="w-10 text-center">Peers</span>
+												<span className="w-10 text-center">Leech</span>
+												<span className="w-14 text-right">Down</span>
+												<span className="w-16 text-right">Next</span>
+											</div>
+										)}
+									</div>
+									<div className="px-3 py-2">
+										{trackersLoading ? (
+											<p className="text-[10px] text-muted-foreground">
+												Loading trackers...
+											</p>
+										) : trackersInfo && trackersInfo.length > 0 ? (
+											<div className="space-y-1 sm:min-w-[500px]">
+												{trackersInfo.map((tracker, idx) => (
+													<TrackerRow
+														key={`${tracker.url}-${idx}`}
+														tracker={tracker}
+													/>
+												))}
+											</div>
+										) : (
+											<p className="text-[10px] text-muted-foreground">
+												No trackers found.
+											</p>
+										)}
+									</div>
+								</div>
+							)}
 						</div>
 
 						<div className="rounded-lg border border-border/60 overflow-hidden">
