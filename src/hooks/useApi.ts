@@ -28,12 +28,12 @@ export function useTorrents(filter?: string, category?: string) {
 	});
 }
 
-export function useTorrentFiles(hash: string | null) {
+export function useTorrentFiles(hash: string | null, isEnabled = true) {
 	return useQuery({
 		queryKey: ["torrent", hash, "files"],
 		queryFn: () =>
 			hash ? qbitClient.getTorrentFiles(hash) : Promise.resolve([]),
-		enabled: !!hash,
+		enabled: isEnabled && !!hash,
 	});
 }
 

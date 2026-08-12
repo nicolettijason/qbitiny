@@ -1,16 +1,20 @@
 import {
+	CheckSquare,
 	ChevronDown,
 	ChevronUp,
 	Clock,
 	Download,
 	FastForward,
+	File,
 	Files,
+	FolderOpen,
 	HardDrive,
 	Magnet,
 	Pause,
 	Play,
 	Rewind,
 	Server,
+	Square,
 	Trash2,
 	TrendingUp,
 	Upload,
@@ -23,6 +27,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useStoragePreferences } from "@/hooks/useStoragePreferences";
+import { toast } from "@/hooks/use-toast";
 import {
 	formatDate,
 	formatNextAnnounce,
@@ -35,8 +40,18 @@ import {
 	getTrackerStatusLabel,
 	isStoppedState,
 } from "@/helpers";
-import type { Torrent, TorrentTracker, TrackerEndpoint } from "@/types";
-import { useTorrentPeers, useTorrentTrackers } from "@/hooks/useApi";
+import type {
+	Torrent,
+	TorrentFile,
+	TorrentTracker,
+	TrackerEndpoint,
+} from "@/types";
+import {
+	useSetFilePriority,
+	useTorrentFiles,
+	useTorrentPeers,
+	useTorrentTrackers,
+} from "@/hooks/useApi";
 
 interface TorrentDetailDialogProps {
 	torrent: Torrent | null;
@@ -46,7 +61,6 @@ interface TorrentDetailDialogProps {
 	onResume: (hash: string) => void;
 	onForceStartChange: (hash: string, forceStart: boolean) => void;
 	onDelete: (hash: string, deleteFiles: boolean) => void;
-	onOpenFiles: (torrent: Torrent) => void;
 }
 
 function StatCard({
@@ -105,6 +119,112 @@ function InfoRow({
 			>
 				{copied ? <span className="text-green-500">Copied!</span> : value}
 			</span>
+		</div>
+	);
+}
+
+interface FileTreeNode {
+	name: string;
+	path: string;
+	isFile: boolean;
+	size: number;
+	progress: number;
+	priority: number;
+	index: number;
+	children: FileTreeNode[];
+}
+
+function buildFileTree(files: TorrentFile[]): FileTreeNode[] {
+	const root: FileTreeNode[] = [];
+
+	files.forEach((file) => {
+		const parts = file.name.split("/");
+		let current = root;
+
+		parts.forEach((part, idx) => {
+			const isLast = idx === parts.length - 1;
+			const path = parts.slice(0, idx + 1).join("/");
+
+			let node = current.find((n) => n.name === part);
+			if (!node) {
+				node = {
+					name: part,
+					path,
+					isFile: isLast,
+					size: isLast ? file.size : 0,
+					progress: isLast ? file.progress : 0,
+					priority: isLast ? file.priority : 0,
+					index: file.index,
+					children: [],
+				};
+				current.push(node);
+			}
+
+			if (!isLast) current = node.children;
+		});
+	});
+
+	return root;
+}
+
+function FileTreeRow({
+	node,
+	depth,
+	sizeUnit,
+	onPriorityChange,
+}: {
+	node: FileTreeNode;
+	depth: number;
+	sizeUnit: string;
+	onPriorityChange: (id: string, priority: number) => void;
+}) {
+	const indent = depth * 14;
+
+	if (node.isFile) {
+		const isSelected = node.priority > 0;
+		return (
+			<div
+				className="flex items-center gap-2 py-1 px-1 rounded hover:bg-muted/50 cursor-pointer text-[11px] text-muted-foreground"
+				style={{ paddingLeft: indent }}
+				onClick={() =>
+					onPriorityChange(String(node.index), isSelected ? 0 : 1)
+				}
+			>
+				{isSelected ? (
+					<CheckSquare className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+				) : (
+					<Square className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+				)}
+				<File className="h-3.5 w-3.5 flex-shrink-0" />
+				<span className="truncate flex-1">{node.name}</span>
+				{node.progress > 0 && node.progress < 1 && (
+					<span className="flex-shrink-0">
+						{Math.round(node.progress * 100)}%
+					</span>
+				)}
+				<span className="flex-shrink-0">{formatSize(node.size, sizeUnit)}</span>
+			</div>
+		);
+	}
+
+	return (
+		<div>
+			<div
+				className="flex items-center gap-2 py-1 px-1 text-[11px] font-medium"
+				style={{ paddingLeft: indent }}
+			>
+				<FolderOpen className="h-3.5 w-3.5 text-yellow-500 flex-shrink-0" />
+				<span className="truncate">{node.name}</span>
+			</div>
+			{node.children.map((child) => (
+				<FileTreeRow
+					key={child.path}
+					node={child}
+					depth={depth + 1}
+					sizeUnit={sizeUnit}
+					onPriorityChange={onPriorityChange}
+				/>
+			))}
 		</div>
 	);
 }
@@ -298,16 +418,21 @@ export function TorrentDetailDialog({
 	onResume,
 	onForceStartChange,
 	onDelete,
-	onOpenFiles,
 }: TorrentDetailDialogProps) {
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState<null | boolean>(
 		null,
 	);
 	const [showMagnet, setShowMagnet] = useState(false);
+	const [showFiles, setShowFiles] = useState(false);
 	const [showPeers, setShowPeers] = useState(false);
 	const [showTrackers, setShowTrackers] = useState(false);
 	const { sizeUnit } = useStoragePreferences();
 
+	const { data: filesData, isLoading: filesLoading } = useTorrentFiles(
+		torrent?.hash ?? null,
+		showFiles,
+	);
+	const setFilePriority = useSetFilePriority();
 	const { data: peersInfo, isLoading: peersLoading } = useTorrentPeers(
 		torrent?.hash || "",
 		showPeers,
@@ -335,6 +460,23 @@ export function TorrentDetailDialog({
 				.map((t) => t.trim())
 				.filter(Boolean)
 		: [];
+
+	const handleFilePriorityChange = async (id: string, priority: number) => {
+		try {
+			await setFilePriority.mutateAsync({ hash: torrent.hash, id, priority });
+		} catch {
+			toast.error("Failed to update file priority");
+		}
+	};
+
+	const fileTree = filesData ? buildFileTree(filesData) : [];
+	const selectedFilesCount =
+		filesData?.filter((f) => f.priority > 0).length || 0;
+	const totalFilesSize = filesData?.reduce((acc, f) => acc + f.size, 0) || 0;
+	const selectedFilesSize =
+		filesData
+			?.filter((f) => f.priority > 0)
+			.reduce((acc, f) => acc + f.size, 0) || 0;
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -559,6 +701,58 @@ export function TorrentDetailDialog({
 									value={`${formatSize(torrent.uploaded, sizeUnit)} / session ${formatSize(torrent.uploaded_session, sizeUnit)}`}
 								/>
 							</div>
+						</div>
+
+						<div className="rounded-lg border border-border/60 overflow-hidden">
+							<button
+								className="w-full px-3 py-2 bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground font-medium flex items-center justify-between hover:bg-muted/60 transition-colors"
+								onClick={() => setShowFiles((v) => !v)}
+							>
+								<span className="flex items-center gap-1.5">
+									<Files className="h-3 w-3" />
+									Files
+								</span>
+								{showFiles ? (
+									<ChevronUp className="h-3 w-3" />
+								) : (
+									<ChevronDown className="h-3 w-3" />
+								)}
+							</button>
+							{showFiles && (
+								<>
+									<div className="px-3 py-2 border-b border-b-muted/40 text-[10px] text-muted-foreground flex items-center justify-between">
+										<span>{filesData?.length || 0} files</span>
+										<span>
+											{selectedFilesCount} selected ·{" "}
+											{formatSize(selectedFilesSize, sizeUnit)} /{" "}
+											{formatSize(totalFilesSize, sizeUnit)}
+										</span>
+									</div>
+									<div className="px-2 py-2 max-h-72 overflow-y-auto">
+										{filesLoading ? (
+											<p className="text-[10px] text-muted-foreground px-1">
+												Loading files...
+											</p>
+										) : fileTree.length > 0 ? (
+											<div className="space-y-0.5">
+												{fileTree.map((node) => (
+													<FileTreeRow
+														key={node.path}
+														node={node}
+														depth={0}
+														sizeUnit={sizeUnit}
+														onPriorityChange={handleFilePriorityChange}
+													/>
+												))}
+											</div>
+										) : (
+											<p className="text-[10px] text-muted-foreground px-1">
+												No files.
+											</p>
+										)}
+									</div>
+								</>
+							)}
 						</div>
 
 						<div className="rounded-lg border border-border/60 overflow-hidden">
@@ -791,15 +985,6 @@ export function TorrentDetailDialog({
 											Disable Force Start
 										</>
 									)}
-								</Button>
-								<Button
-									size="sm"
-									variant="outline"
-									onClick={() => onOpenFiles(torrent)}
-									className="gap-1.5"
-								>
-									<Files className="h-3.5 w-3.5" />
-									Files
 								</Button>
 							</div>
 							<div className="flex items-center gap-2">

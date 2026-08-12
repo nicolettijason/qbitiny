@@ -41,7 +41,6 @@ import {
 } from "@/components/ui/table";
 
 import { TorrentDetailDialog } from "./TorrentDetailDialog";
-import { TorrentFilesDialog } from "./TorrentFilesDialog";
 import {
 	useTorrents,
 	usePauseTorrents,
@@ -258,9 +257,6 @@ export function TorrentsView() {
 	const [sortField, setSortField] = useState<Columns>("added_on");
 	const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 	const [currentPage, setCurrentPage] = useState(1);
-	const [filesDialogTorrent, setFilesDialogTorrent] = useState<Torrent | null>(
-		null,
-	);
 	const [detailTorrent, setDetailTorrent] = useState<Torrent | null>(null);
 	const { sizeUnit, tableViewSettings } = useStoragePreferences();
 	const [tableSettings] = useState<ColumnsConfig>(() =>
@@ -971,12 +967,6 @@ export function TorrentsView() {
 																	</>
 																)}
 															</DropdownMenuItem>
-															<DropdownMenuItem
-																onClick={() => setFilesDialogTorrent(torrent)}
-															>
-																<Files className="h-4 w-4 mr-2" />
-																Files
-															</DropdownMenuItem>
 															<div className="h-px bg-border my-1" />
 															<DropdownMenuItem
 																onClick={() =>
@@ -1154,7 +1144,7 @@ export function TorrentsView() {
 										variant="ghost"
 										size="icon"
 										className="h-7 w-7"
-										onClick={() => setFilesDialogTorrent(torrent)}
+										onClick={() => setDetailTorrent(torrent)}
 									>
 										<Files className="h-3.5 w-3.5" />
 									</Button>
@@ -1241,16 +1231,6 @@ export function TorrentsView() {
 				onDelete={(hash, deleteFiles) =>
 					deleteMutation.mutate({ hashes: [hash], deleteFiles })
 				}
-				onOpenFiles={(torrent) => {
-					setDetailTorrent(null);
-					setFilesDialogTorrent(torrent);
-				}}
-			/>
-
-			<TorrentFilesDialog
-				torrent={filesDialogTorrent}
-				open={!!filesDialogTorrent}
-				onOpenChange={(open) => !open && setFilesDialogTorrent(null)}
 			/>
 		</div>
 	);
