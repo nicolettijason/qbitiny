@@ -4,7 +4,7 @@ import React, {
 	ReactNode,
 	useState,
 	useCallback,
-	useEffect,
+	useMemo,
 } from "react";
 import { StorageValue, StorageKey } from "@/types/storage";
 import { defaultPreferences } from "@/constants";
@@ -43,52 +43,46 @@ interface StorageContextType {
 
 const StorageContext = createContext<StorageContextType | null>(null);
 
+function readLocalStorage(key: string): string | null {
+	try {
+		return localStorage.getItem(key);
+	} catch (error) {
+		console.error(`Error reading ${key} from storage:`, error);
+		return null;
+	}
+}
+
 export function StorageProvider({ children }: { children: ReactNode }) {
-	// Auth states
-	const [qbitUser, setQbitUserState] = useState<string>("");
-	const [qbitPass, setQbitPassState] = useState<string>("");
+	// Auth states — read synchronously so the very first render already
+	// reflects a saved session (avoids a login-page flash on reload).
+	const [qbitUser, setQbitUserState] = useState<string>(
+		() => readLocalStorage(STORAGE_KEYS.qbitUser) || "",
+	);
+	const [qbitPass, setQbitPassState] = useState<string>(
+		() => readLocalStorage(STORAGE_KEYS.qbitPass) || "",
+	);
 
 	// Preferences states
-	const [qbitwebberSizeUnit, setQbitwebberSizeUnitState] =
-		useState<string>("B");
+	const [qbitwebberSizeUnit, setQbitwebberSizeUnitState] = useState<string>(
+		() => readLocalStorage(STORAGE_KEYS.qbitwebberSizeUnit) || "B",
+	);
 	const [qbitwebberInteractiveTabTitle, setQbitwebberInteractiveTabTitleState] =
-		useState<boolean>(false);
+		useState<boolean>(
+			() =>
+				readLocalStorage(STORAGE_KEYS.qbitwebberInteractiveTabTitle) ===
+				"true",
+		);
 	const [qbitwebberTableViewSettings, setQbitwebberTableViewSettingsState] =
-		useState(defaultPreferences.columns);
-
-	// Initialize from localStorage on mount
-	useEffect(() => {
-		try {
-			const user = localStorage.getItem(STORAGE_KEYS.qbitUser);
-			if (user) setQbitUserState(user);
-
-			const pass = localStorage.getItem(STORAGE_KEYS.qbitPass);
-			if (pass) setQbitPassState(pass);
-
-			const sizeUnit = localStorage.getItem(STORAGE_KEYS.qbitwebberSizeUnit);
-			if (sizeUnit) setQbitwebberSizeUnitState(sizeUnit);
-
-			const tableSettings = localStorage.getItem(
-				STORAGE_KEYS.qbitwebberTableViewSettings,
-			);
-			if (tableSettings) {
-				try {
-					setQbitwebberTableViewSettingsState(JSON.parse(tableSettings));
-				} catch (e) {
-					console.error("Failed to parse table view settings:", e);
-				}
+		useState(() => {
+			const stored = readLocalStorage(STORAGE_KEYS.qbitwebberTableViewSettings);
+			if (!stored) return defaultPreferences.columns;
+			try {
+				return JSON.parse(stored);
+			} catch (e) {
+				console.error("Failed to parse table view settings:", e);
+				return defaultPreferences.columns;
 			}
-
-			const interactiveTabTitle = localStorage.getItem(
-				STORAGE_KEYS.qbitwebberInteractiveTabTitle,
-			);
-			if (interactiveTabTitle) {
-				setQbitwebberInteractiveTabTitleState(interactiveTabTitle === "true");
-			}
-		} catch (error) {
-			console.error("Error initializing storage:", error);
-		}
-	}, []);
+		});
 
 	// Setters that update both state and localStorage
 	const setQbitUser = useCallback((value: string) => {
@@ -151,18 +145,32 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 		}
 	}, []);
 
-	const value: StorageContextType = {
-		qbitUser,
-		setQbitUser,
-		qbitPass,
-		setQbitPass,
-		qbitwebberSizeUnit,
-		setQbitwebberSizeUnit,
-		qbitwebberInteractiveTabTitle,
-		setQbitwebberInteractiveTabTitle,
-		qbitwebberTableViewSettings,
-		setQbitwebberTableViewSettings,
-	};
+	const value: StorageContextType = useMemo(
+		() => ({
+			qbitUser,
+			setQbitUser,
+			qbitPass,
+			setQbitPass,
+			qbitwebberSizeUnit,
+			setQbitwebberSizeUnit,
+			qbitwebberInteractiveTabTitle,
+			setQbitwebberInteractiveTabTitle,
+			qbitwebberTableViewSettings,
+			setQbitwebberTableViewSettings,
+		}),
+		[
+			qbitUser,
+			setQbitUser,
+			qbitPass,
+			setQbitPass,
+			qbitwebberSizeUnit,
+			setQbitwebberSizeUnit,
+			qbitwebberInteractiveTabTitle,
+			setQbitwebberInteractiveTabTitle,
+			qbitwebberTableViewSettings,
+			setQbitwebberTableViewSettings,
+		],
+	);
 
 	return (
 		<StorageContext.Provider value={value}>{children}</StorageContext.Provider>

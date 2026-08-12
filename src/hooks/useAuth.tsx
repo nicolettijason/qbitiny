@@ -41,7 +41,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		} else {
 			setIsLoading(false);
 		}
-	}, [storage]);
+		// Only re-run when the saved credentials themselves change, not on
+		// unrelated preference updates (storage.setQbitPass is stable).
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [storage.qbitUser, storage.qbitPass]);
 
 	const login = async (newUsername: string, password: string) => {
 		setIsLoading(true);
