@@ -117,7 +117,7 @@ function InfoRow({
 				onClick={isString ? handleCopy : undefined}
 				title={isString ? (copied ? "Copied!" : "Click to copy") : undefined}
 			>
-				{copied ? <span className="text-green-500">Copied!</span> : value}
+				{copied ? <span className="text-success">Copied!</span> : value}
 			</span>
 		</div>
 	);
@@ -191,7 +191,7 @@ function FileTreeRow({
 				}
 			>
 				{isSelected ? (
-					<CheckSquare className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+					<CheckSquare className="h-3.5 w-3.5 text-success flex-shrink-0" />
 				) : (
 					<Square className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
 				)}
@@ -213,7 +213,7 @@ function FileTreeRow({
 				className="flex items-center gap-2 py-1 px-1 text-[11px] font-medium"
 				style={{ paddingLeft: indent }}
 			>
-				<FolderOpen className="h-3.5 w-3.5 text-yellow-500 flex-shrink-0" />
+				<FolderOpen className="h-3.5 w-3.5 text-warning flex-shrink-0" />
 				<span className="truncate">{node.name}</span>
 			</div>
 			{node.children.map((child) => (
@@ -514,7 +514,7 @@ export function TorrentDetailDialog({
 									strokeDashoffset={`${2 * Math.PI * 20 * (1 - torrent.progress)}`}
 									strokeLinecap="round"
 									className={
-										progressPct === 100 ? "text-green-500" : "text-primary"
+										progressPct === 100 ? "text-success" : "text-primary"
 									}
 								/>
 							</svg>
@@ -584,7 +584,7 @@ export function TorrentDetailDialog({
 								icon={<Download className="h-3 w-3" />}
 								label="Download"
 								value={
-									<span className="text-blue-500">
+									<span className="text-info">
 										{formatSize(torrent.dlspeed, sizeUnit)}/s
 									</span>
 								}
@@ -593,7 +593,7 @@ export function TorrentDetailDialog({
 								icon={<Upload className="h-3 w-3" />}
 								label="Upload"
 								value={
-									<span className="text-green-500">
+									<span className="text-success">
 										{formatSize(torrent.upspeed, sizeUnit)}/s
 									</span>
 								}

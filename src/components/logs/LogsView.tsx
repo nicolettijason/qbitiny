@@ -14,9 +14,9 @@ function getLogIcon(type: FilterLevel | string) {
     case 'ERROR':
       return <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 text-destructive" />
     case 'WARNING':
-      return <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-yellow-500" />
+      return <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-warning" />
     default:
-      return <Info className="h-3.5 w-3.5 flex-shrink-0 text-blue-400" />
+      return <Info className="h-3.5 w-3.5 flex-shrink-0 text-info" />
   }
 }
 
@@ -26,7 +26,7 @@ function getLogTextColor(type: string) {
     case 'ERROR':
       return 'text-destructive'
     case 'WARNING':
-      return 'text-yellow-500'
+      return 'text-warning'
     default:
       return ''
   }
@@ -57,8 +57,8 @@ export function LogsView() {
 
   const filters: { label: string; value: FilterLevel; className: string }[] = [
     { label: 'All', value: 'ALL', className: '' },
-    { label: 'Info', value: 'INFO', className: 'text-blue-400' },
-    { label: 'Warning', value: 'WARNING', className: 'text-yellow-500' },
+    { label: 'Info', value: 'INFO', className: 'text-info' },
+    { label: 'Warning', value: 'WARNING', className: 'text-warning' },
     { label: 'Error', value: 'ERROR', className: 'text-destructive' },
   ]
 

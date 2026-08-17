@@ -366,10 +366,10 @@ export function SearchView() {
 													<TableCell>
 														{formatSize(result.fileSize, sizeUnit)}
 													</TableCell>
-													<TableCell className="text-green-500">
+													<TableCell className="text-success">
 														{result.nbSeeders}
 													</TableCell>
-													<TableCell className="text-red-500">
+													<TableCell className="text-destructive">
 														{result.nbLeechers}
 													</TableCell>
 													<TableCell className="text-muted-foreground truncate max-w-[150px]">

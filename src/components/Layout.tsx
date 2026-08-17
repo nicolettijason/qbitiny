@@ -101,8 +101,8 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 					<div className="flex items-center gap-3">
 						{transferInfo ? (
 							<div className="flex items-center gap-2 text-xs">
-								<div className="flex items-center gap-1 bg-muted/60 rounded px-2 py-1 text-[10px] sm:text-xs">
-									<span className="text-blue-500 font-bold">↓</span>
+								<div className="flex items-center gap-1 bg-info/10 rounded px-2 py-1 text-[10px] sm:text-xs">
+									<span className="text-info font-bold">↓</span>
 									<span className="font-medium">
 										{transferInfoData?.dlSpeed}
 									</span>
@@ -110,8 +110,8 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 										({transferInfoData?.dlData})
 									</span>
 								</div>
-								<div className="flex items-center gap-1 bg-muted/60 rounded text-[10px] sm:text-xs py-1 px-2">
-									<span className="text-green-500 font-bold">↑</span>
+								<div className="flex items-center gap-1 bg-success/10 rounded text-[10px] sm:text-xs py-1 px-2">
+									<span className="text-success font-bold">↑</span>
 									<span className="font-medium">
 										{transferInfoData?.upSpeed}
 									</span>
@@ -198,7 +198,10 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 						<Button
 							key={tab.id}
 							variant={activeTab === tab.id ? "secondary" : "ghost"}
-							className="justify-start gap-2"
+							className={cn(
+								"justify-start gap-2",
+								activeTab === tab.id && "border-l-2 border-primary bg-primary/5"
+							)}
 							onClick={() => onTabChange(tab.id)}
 						>
 							{tab.icon}

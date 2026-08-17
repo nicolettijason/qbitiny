@@ -472,13 +472,13 @@ export function TorrentsView() {
 			),
 			dlspeed: (torrent) => (
 				<div className="flex items-center gap-1">
-					<Download className="h-3 w-3 text-blue-500" />
+					<Download className="h-3 w-3 text-info" />
 					{formatSize(torrent.dlspeed, sizeUnit)}/s
 				</div>
 			),
 			upspeed: (torrent) => (
 				<div className="flex items-center gap-1">
-					<Upload className="h-3 w-3 text-green-500" />
+					<Upload className="h-3 w-3 text-success" />
 					{formatSize(torrent.upspeed, sizeUnit)}/s
 				</div>
 			),
@@ -1093,13 +1093,13 @@ export function TorrentsView() {
 							<div className="flex items-center justify-between border-t border-border/50 px-3 py-1.5">
 								<div className="flex items-center gap-3 text-[11px] text-muted-foreground">
 									<span className="flex items-center gap-1">
-										<Download className="h-3 w-3 text-blue-500" />
+										<Download className="h-3 w-3 text-info" />
 										<span className="tabular-nums">
 											{formatSize(torrent.dlspeed, sizeUnit)}/s
 										</span>
 									</span>
 									<span className="flex items-center gap-1">
-										<Upload className="h-3 w-3 text-green-500" />
+										<Upload className="h-3 w-3 text-success" />
 										<span className="tabular-nums">
 											{formatSize(torrent.upspeed, sizeUnit)}/s
 										</span>

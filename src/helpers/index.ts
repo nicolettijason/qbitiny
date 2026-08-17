@@ -69,9 +69,9 @@ export function isStoppedState(state: string): boolean {
 }
 
 export function getStateColor(state: string, completedOn: number): string {
-	if (isStoppedState(state) && completedOn > 0) return "text-green-500";
+	if (isStoppedState(state) && completedOn > 0) return "text-success";
 	if (state === "downloading" || state === "forcedDL" || state === "metaDL")
-		return "text-blue-500";
+		return "text-info";
 	if (
 		state === "uploading" ||
 		state === "forcedUP" ||
@@ -79,9 +79,9 @@ export function getStateColor(state: string, completedOn: number): string {
 		state === "completed" ||
 		state === "seeding"
 	)
-		return "text-green-500";
-	if (isStoppedState(state)) return "text-yellow-500";
-	if (state === "error") return "text-red-500";
+		return "text-success";
+	if (isStoppedState(state)) return "text-warning";
+	if (state === "error") return "text-destructive";
 	return "text-muted-foreground";
 }
 
@@ -132,14 +132,14 @@ export function getTrackerStatusLabel(status: number): string {
 export function getTrackerStatusColor(status: number): string {
 	switch (status) {
 		case 2:
-			return "text-green-500";
+			return "text-success";
 		case 3:
-			return "text-blue-500";
+			return "text-info";
 		case 1:
-			return "text-yellow-500";
+			return "text-warning";
 		case 4:
 		case 5:
-			return "text-red-500";
+			return "text-destructive";
 		default:
 			return "text-muted-foreground";
 	}
