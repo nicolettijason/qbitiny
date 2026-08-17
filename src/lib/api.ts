@@ -10,6 +10,7 @@ import type {
 	LogEntry,
 	TransferInfo,
 	TorrentPeersResponse,
+	Preferences,
 } from "@/types";
 
 import { demoClient } from "./demoClient";
@@ -110,8 +111,8 @@ class QBittorrentClient {
 		return this.request<AppConfig>("/api/v2/app/config");
 	}
 
-	async getPreferences(): Promise<Record<string, unknown>> {
-		return this.request<Record<string, unknown>>("/api/v2/app/preferences");
+	async getPreferences(): Promise<Omit<Preferences, "columns" | "sizeUnit">> {
+		return this.request<Omit<Preferences, "columns" | "sizeUnit">>("/api/v2/app/preferences");
 	}
 
 	async setPreferences(prefs: Record<string, unknown>): Promise<void> {

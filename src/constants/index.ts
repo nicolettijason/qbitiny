@@ -1,5 +1,3 @@
-import { Preferences } from "@/types";
-
 // src/constants/index.ts
 type ColumnEntry = { active: boolean; order: number };
 

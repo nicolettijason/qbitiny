@@ -9,7 +9,7 @@ import { useStoragePreferences } from "./useStoragePreferences";
 export function useSettingsPreferences() {
 	const { sizeUnit, setSizeUnit, tableViewSettings } = useStoragePreferences();
 	const [preferences, setPreferences] = useState<Preferences>(
-		defaultPreferences as unknown as Preferences,
+		defaultPreferences as Preferences,
 	);
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -21,7 +21,7 @@ export function useSettingsPreferences() {
 
 	const loadPreferences = async () => {
 		try {
-			const prefs = (await qbitClient.getPreferences()) as unknown as Preferences;
+			const prefs = await qbitClient.getPreferences() as Preferences;
 			setPreferences({
 				...defaultPreferences,
 				...prefs,
