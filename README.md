@@ -16,9 +16,9 @@ Built with React, Vite and TypeScript.
 - Responsive design, mobile-friendly
 - Light & dark mode
 
-<img width="1892" height="503" alt="image" src="https://github.com/user-attachments/assets/ebcddab6-e906-4f45-b104-2c5b965a2188" />
-<img width="1592" height="878" alt="image" src="https://github.com/user-attachments/assets/2645ea81-65a7-4934-82c5-75fba5795c64" />
-<img width="535" height="776" alt="image" src="https://github.com/user-attachments/assets/199e6f87-39ed-42b2-b30b-b8a9bc4950d4" />
+<img width="1892" height="548" alt="Torrent web view" src="https://github.com/user-attachments/assets/9ebd740c-ecf4-461b-8663-4a329401ea33" />
+<img width="470" height="775" alt="Torrent mobile view" src="https://github.com/user-attachments/assets/365d95b7-b13c-4ffc-ae55-1c4ac95db502" />
+<img width="880" height="842" alt="detail dialog view" src="https://github.com/user-attachments/assets/428112b5-c428-4381-95b3-1785d62f01f7" />
 
 ## Installation
 
