@@ -124,6 +124,7 @@ export function getTrackerStatusLabel(status: number): string {
 		2: "Working",
 		3: "Updating",
 		4: "Not working",
+		5: "Tracker error",
 	};
 	return labels[status] ?? "Unknown";
 }
@@ -137,6 +138,7 @@ export function getTrackerStatusColor(status: number): string {
 		case 1:
 			return "text-yellow-500";
 		case 4:
+		case 5:
 			return "text-red-500";
 		default:
 			return "text-muted-foreground";
