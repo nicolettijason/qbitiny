@@ -44,7 +44,7 @@ export function DefaultWebUICard() {
 			<CardHeader>
 				<CardTitle>Default Web UI</CardTitle>
 				<CardDescription>
-					Disable qbitwebber and revert to qBittorrent's built-in Web UI
+					Disable qbitiny and revert to qBittorrent's built-in Web UI
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -65,9 +65,9 @@ export function DefaultWebUICard() {
 						<DialogHeader>
 							<DialogTitle>Revert to Default Web UI?</DialogTitle>
 							<DialogDescription>
-								This will disable qbitwebber. You will need to re-enable
+								This will disable qbitiny. You will need to re-enable
 								the alternative Web UI in qBittorrent's settings to use
-								qbitwebber again.
+								qbitiny again.
 							</DialogDescription>
 						</DialogHeader>
 						<DialogFooter>

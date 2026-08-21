@@ -2,6 +2,7 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import fs from "fs";
 
 // flag-icons ships a square (.fis) variant of every country flag alongside
 // the default rectangular one. The app only ever uses the rectangular
@@ -19,8 +20,13 @@ function stripUnusedFlagVariant(): Plugin {
 	};
 }
 
+const packageJson = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
+
 export default defineConfig({
 	plugins: [stripUnusedFlagVariant(), react(), tailwindcss()],
+	define: {
+		"import.meta.env.VITE_APP_VERSION": JSON.stringify(packageJson.version),
+	},
 	build: {
 		outDir: "release/qbitiny/public",
 	},
