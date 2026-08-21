@@ -7,6 +7,7 @@ export interface GitHubRelease {
 	published_at: string;
 	html_url: string;
 	body: string;
+	zipUrl?: string;
 }
 
 export async function getLatestRelease(): Promise<GitHubRelease | null> {
@@ -31,6 +32,7 @@ export async function getLatestRelease(): Promise<GitHubRelease | null> {
 			published_at: data.published_at,
 			html_url: data.html_url,
 			body: data.body,
+			zipUrl: data.assets.find((asset: { name: string; browser_download_url: string }) => asset.name.endsWith(".zip"))?.browser_download_url,
 		};
 	} catch (error) {
 		console.error("Failed to fetch latest release from GitHub:", error);
@@ -50,7 +52,6 @@ export function compareVersions(
 	for (let i = 0; i < maxLength; i++) {
 		const currentPart = currentParts[i] || 0;
 		const latestPart = latestParts[i] || 0;
-		console.log(`Comparing parts: current=${currentPart}, latest=${latestPart}`);
 
 		if (latestPart > currentPart) {
 			return "outdated";
