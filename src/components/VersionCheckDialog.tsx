@@ -22,7 +22,7 @@ const DISMISSED_VERSION_KEY = "qbitiny_dismissed_version";
 export function VersionCheckDialog({ currentVersion }: VersionCheckDialogProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [latestVersion, setLatestVersion] = useState<string | null>(null);
-	const [releaseUrl, setReleaseUrl] = useState<string | null>(null);
+	const [zipUrl, setZipUrl] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [dontShowAgain, setDontShowAgain] = useState(false);
 
@@ -33,7 +33,7 @@ export function VersionCheckDialog({ currentVersion }: VersionCheckDialogProps) 
 			if (latestRelease) {
 				const versionTag = latestRelease.tag_name.replace(/^v/, "");
 				setLatestVersion(versionTag);
-				setReleaseUrl(latestRelease.html_url);
+				setZipUrl(latestRelease.zipUrl ?? latestRelease.html_url);
 
 				const dismissedVersion = localStorage.getItem(DISMISSED_VERSION_KEY);
 				const status = compareVersions(currentVersion, versionTag);
@@ -50,8 +50,8 @@ export function VersionCheckDialog({ currentVersion }: VersionCheckDialogProps) 
 	}, [currentVersion]);
 
 	const handleDownload = () => {
-		if (releaseUrl) {
-			window.open(releaseUrl, "_blank");
+		if (zipUrl) {
+			window.open(zipUrl, "_blank");
 		}
 	};
 

@@ -11,6 +11,7 @@ export function AboutSettingsTab() {
 		tag: string;
 		name: string;
 		url: string;
+		zipUrl?: string;
 	} | null>(null);
 	const [checking, setChecking] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -32,6 +33,7 @@ export function AboutSettingsTab() {
 			tag: versionTag,
 			name: release.name,
 			url: release.html_url,
+			zipUrl: release.zipUrl,
 		});
 
 		setChecking(false);
@@ -39,7 +41,7 @@ export function AboutSettingsTab() {
 
 	const handleDownloadBuild = () => {
 		if (latestRelease) {
-			window.open(latestRelease.url, "_blank");
+			window.open(latestRelease.zipUrl ?? latestRelease.url, "_blank");
 		}
 	};
 
