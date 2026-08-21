@@ -4,6 +4,7 @@ import { GeneralTab } from "./GeneralTab";
 import { QueueingSettingsTab } from "./QueueingSettingsTab";
 import { SpeedSettingsTab } from "./SpeedSettingsTab";
 import { ConnectionSettingsTab } from "./ConnectionSettingsTab";
+import { AboutSettingsTab } from "./AboutSettingsTab";
 
 export function SettingsView() {
 	const {
@@ -21,11 +22,12 @@ export function SettingsView() {
 	return (
 		<div className="max-w-4xl mx-auto space-y-4">
 			<Tabs defaultValue="general" className="w-full">
-				<TabsList className="grid w-full grid-cols-4">
+				<TabsList className="grid w-full grid-cols-5">
 					<TabsTrigger value="general">General</TabsTrigger>
 					<TabsTrigger value="queueing">Queueing</TabsTrigger>
 					<TabsTrigger value="speed">Speed</TabsTrigger>
 					<TabsTrigger value="connection">Connection</TabsTrigger>
+					<TabsTrigger value="about">About</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="general">
@@ -62,6 +64,10 @@ export function SettingsView() {
 						onUpdatePreference={updatePreference}
 						onSave={() => handleSave("connection")}
 					/>
+				</TabsContent>
+
+				<TabsContent value="about">
+					<AboutSettingsTab />
 				</TabsContent>
 			</Tabs>
 		</div>

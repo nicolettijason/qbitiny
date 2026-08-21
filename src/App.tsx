@@ -12,6 +12,7 @@ import { RSSView } from "@/components/rss/RSSView";
 import { SearchView } from "@/components/search/SearchView";
 import { LogsView } from "@/components/logs/LogsView";
 import { SettingsView } from "@/components/settings/SettingsView";
+import { VersionCheckDialog } from "@/components/VersionCheckDialog";
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -27,6 +28,7 @@ type Tab = "torrents" | "add" | "rss" | "search" | "logs" | "settings";
 function AppContent() {
 	const [activeTab, setActiveTab] = useState<Tab>("torrents");
 	const { isAuthenticated, isLoading } = useAuth();
+	const appVersion = import.meta.env.VITE_APP_VERSION || "1.0.0";
 
 	if (isLoading) {
 		return (
@@ -41,14 +43,17 @@ function AppContent() {
 	}
 
 	return (
-		<Layout activeTab={activeTab} onTabChange={setActiveTab}>
-			{activeTab === "torrents" && <TorrentsView />}
-			{activeTab === "add" && <AddTorrentView />}
-			{activeTab === "rss" && <RSSView />}
-			{activeTab === "search" && <SearchView />}
-			{activeTab === "logs" && <LogsView />}
-			{activeTab === "settings" && <SettingsView />}
-		</Layout>
+		<>
+			<VersionCheckDialog currentVersion={appVersion} />
+			<Layout activeTab={activeTab} onTabChange={setActiveTab}>
+				{activeTab === "torrents" && <TorrentsView />}
+				{activeTab === "add" && <AddTorrentView />}
+				{activeTab === "rss" && <RSSView />}
+				{activeTab === "search" && <SearchView />}
+				{activeTab === "logs" && <LogsView />}
+				{activeTab === "settings" && <SettingsView />}
+			</Layout>
+		</>
 	);
 }
 
