@@ -219,7 +219,15 @@ export interface LogEntry {
 	message: string;
 }
 
-export type LogType = "INFO" | "WARNING" | "CRITICAL" | "DEBUG" | "ERROR";
+/** Log levels as returned by /api/v2/log/main (bit flags). */
+export const LogType = {
+	Normal: 1,
+	Info: 2,
+	Warning: 4,
+	Critical: 8,
+} as const;
+
+export type LogType = (typeof LogType)[keyof typeof LogType];
 
 export interface TransferInfo {
 	connection_status: string;

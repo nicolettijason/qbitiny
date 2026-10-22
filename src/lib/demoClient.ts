@@ -9,6 +9,7 @@ import type {
 	TransferInfo,
 	TorrentPeersResponse,
 } from "@/types";
+import { LogType } from "@/types";
 
 class DemoQBittorrentClient {
 	private isLoggedIn = false;
@@ -578,32 +579,32 @@ class DemoQBittorrentClient {
 			{
 				id: 1,
 				timestamp: now - 60,
-				type: "INFO",
+				type: LogType.Info,
 				message: "qBittorrent v5.0.1 started",
 			},
 			{
 				id: 2,
 				timestamp: now - 120,
-				type: "INFO",
+				type: LogType.Info,
 				message: "Listening on IP: 0.0.0.0:8080",
 			},
 			{
 				id: 3,
 				timestamp: now - 180,
-				type: "WARNING",
+				type: LogType.Warning,
 				message:
 					'Tracker "https://bad-tracker.com" failed: Connection timed out',
 			},
 			{
 				id: 4,
 				timestamp: now - 240,
-				type: "INFO",
+				type: LogType.Info,
 				message: "Downloaded ubuntu-24.04-desktop-amd64.iso (100%)",
 			},
 			{
 				id: 5,
 				timestamp: now - 300,
-				type: "INFO",
+				type: LogType.Info,
 				message: 'Torrent category "Movies" created',
 			},
 		];
