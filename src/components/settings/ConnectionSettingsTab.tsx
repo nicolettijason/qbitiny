@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Preferences } from "@/types";
+import { useTranslation } from "@/i18n";
 
 interface ConnectionSettingsTabProps {
 	preferences: Preferences;
@@ -27,17 +28,18 @@ export function ConnectionSettingsTab({
 	onUpdatePreference,
 	onSave,
 }: ConnectionSettingsTabProps) {
+	const { t } = useTranslation();
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Connection Settings</CardTitle>
+				<CardTitle>{t("settings.connection.title")}</CardTitle>
 				<CardDescription>
-					Configure ports and network options
+					{t("settings.connection.description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="space-y-2">
-					<Label htmlFor="listen_port">Listen Port</Label>
+					<Label htmlFor="listen_port">{t("settings.connection.listenPort")}</Label>
 					<Input
 						id="listen_port"
 						type="number"
@@ -68,7 +70,7 @@ export function ConnectionSettingsTab({
 							onUpdatePreference("random_port", !!checked)
 						}
 					/>
-					<Label htmlFor="random_port">Random Port</Label>
+					<Label htmlFor="random_port">{t("settings.connection.randomPort")}</Label>
 				</div>
 				<div className="flex items-center space-x-2">
 					<Checkbox
@@ -101,7 +103,7 @@ export function ConnectionSettingsTab({
 					<Label htmlFor="lsd">LSD</Label>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="encryption">Encryption</Label>
+					<Label htmlFor="encryption">{t("settings.connection.encryption")}</Label>
 					<select
 						id="encryption"
 						className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -110,16 +112,16 @@ export function ConnectionSettingsTab({
 							onUpdatePreference("encryption", parseInt(e.target.value))
 						}
 					>
-						<option value={0}>Prefer encryption</option>
-						<option value={1}>Force encryption on</option>
-						<option value={2}>Force encryption off</option>
+						<option value={0}>{t("settings.connection.preferEncryption")}</option>
+						<option value={1}>{t("settings.connection.forceOn")}</option>
+						<option value={2}>{t("settings.connection.forceOff")}</option>
 					</select>
 				</div>
 				<Button
 					onClick={onSave}
 					disabled={saving}
 				>
-					Save Connection Settings
+					{t("settings.connection.save")}
 				</Button>
 			</CardContent>
 		</Card>

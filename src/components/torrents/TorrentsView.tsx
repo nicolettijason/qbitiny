@@ -74,8 +74,8 @@ import {
 	isForcedState,
 	isStoppedState,
 } from "@/helpers";
-import { columnsDictionary } from "@/constants";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/i18n";
 
 const TorrentDetailDialog = lazy(() =>
 	import("./TorrentDetailDialog").then((m) => ({
@@ -127,6 +127,7 @@ function FilterCheckboxRow({
 	onToggle: () => void;
 	badgeColor?: string;
 }) {
+	const { t } = useTranslation();
 	return (
 		<div
 			className="flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded cursor-pointer"
@@ -149,7 +150,7 @@ function FilterCheckboxRow({
 				</span>
 			) : (
 				<span className="text-sm flex-1 truncate">
-					{label || "no category"}
+					{label || t("filters.noCategory")}
 				</span>
 			)}
 		</div>
@@ -157,6 +158,7 @@ function FilterCheckboxRow({
 }
 
 export function TorrentsView() {
+	const { t, tp } = useTranslation();
 	const { data: torrents, isLoading } = useTorrents();
 	const pauseMutation = usePauseTorrents();
 	const resumeMutation = useResumeTorrents();
@@ -207,13 +209,13 @@ export function TorrentsView() {
 
 	const handleCopyMagnet = async (torrent: Torrent) => {
 		if (await copyToClipboard(torrent.magnet_uri))
-			toast.success("Magnet link copied");
-		else toast.error("Could not copy the magnet link");
+			toast.success(t("common.magnetCopied"));
+		else toast.error(t("common.magnetCopyFailed"));
 	};
 
 	const handleSaveAsDefault = () => {
 		setTorrentListDefaults(currentListSettings);
-		toast.success("Default sort & filters saved");
+		toast.success(t("defaults.saved"));
 	};
 
 	const handlePause = () => {
@@ -253,7 +255,7 @@ export function TorrentsView() {
 				<span
 					className={`text-xs ${getStateColor(torrent.state, torrent.completion_on)}`}
 				>
-					{getStateLabel(torrent.state, torrent.completion_on)}
+					{getStateLabel(torrent.state, torrent.completion_on, t)}
 				</span>
 			),
 			progress: (torrent) => {
@@ -354,14 +356,14 @@ export function TorrentsView() {
 						<input
 							disabled
 							className="w-full h-10 pl-9 pr-8 py-2 text-sm rounded-md border border-input bg-muted text-muted-foreground cursor-not-allowed opacity-60"
-							placeholder="Filter torrents..."
+							placeholder={t("torrents.filterPlaceholder")}
 							value=""
 							onChange={() => {}}
 						/>
 					</div>
 					<Button variant="outline" disabled className="gap-2 h-10 px-3">
 						<Filter className="h-4 w-4" />
-						<span className="hidden sm:inline">Filtres</span>
+						<span className="hidden sm:inline">{t("filters.title")}</span>
 					</Button>
 				</div>
 				{/* Desktop skeleton table */}
@@ -466,7 +468,9 @@ export function TorrentsView() {
 		);
 	if (!torrents || torrents.length === 0)
 		return (
-			<div className="text-center py-8 text-muted-foreground">No torrents</div>
+			<div className="text-center py-8 text-muted-foreground">
+				{t("torrents.empty")}
+			</div>
 		);
 
 	return (
@@ -477,7 +481,7 @@ export function TorrentsView() {
 					<Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 					<input
 						className="w-full h-10 pl-9 pr-8 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-						placeholder="Filter torrents..."
+						placeholder={t("torrents.filterPlaceholder")}
 						value={searchQuery}
 						onChange={(e) => {
 							setSearchQuery(e.target.value);
@@ -502,8 +506,8 @@ export function TorrentsView() {
 							<Filter className="h-4 w-4" />
 							<span className="hidden sm:inline">
 								{totalActiveFilters === 0
-									? "Filters"
-									: `${totalActiveFilters} filters`}
+									? t("filters.title")
+									: tp("filters.active", totalActiveFilters)}
 							</span>
 						</Button>
 					</DropdownMenuTrigger>
@@ -511,12 +515,12 @@ export function TorrentsView() {
 						{/* State section */}
 						<div className="px-2 py-2">
 							<div className="text-xs font-semibold text-muted-foreground mb-2 px-2">
-								State
+								{t("filters.state")}
 							</div>
 							{STATE_FILTERS.map((state) => (
 								<FilterCheckboxRow
 									key={state}
-									label={getStateFilterLabel(state)}
+									label={getStateFilterLabel(state, t)}
 									checked={selectedStates.has(state)}
 									onToggle={() => toggleStateFilter(state)}
 								/>
@@ -528,7 +532,7 @@ export function TorrentsView() {
 								<div className="h-px bg-border my-2" />
 								<div className="px-2 py-2">
 									<div className="text-xs font-semibold text-muted-foreground mb-2 px-2">
-										Categories
+										{t("filters.categories")}
 									</div>
 									{uniqueCategories.map((category) => (
 										<FilterCheckboxRow
@@ -550,7 +554,7 @@ export function TorrentsView() {
 								<div className="h-px bg-border my-2" />
 								<div className="px-2 py-2">
 									<div className="text-xs font-semibold text-muted-foreground mb-2 px-2">
-										Trackers
+										{t("filters.trackers")}
 									</div>
 									<div className="max-h-40 overflow-y-auto">
 										{uniqueTrackers.map((tracker) => (
@@ -577,7 +581,7 @@ export function TorrentsView() {
 									className="w-full text-xs"
 									onClick={resetFilters}
 								>
-									Reset filters
+									{t("filters.reset")}
 								</Button>
 							)}
 							<Button
@@ -587,7 +591,7 @@ export function TorrentsView() {
 								onClick={handleSaveAsDefault}
 							>
 								<Save className="h-3.5 w-3.5 mr-1" />
-								Save sort & filters as default
+								{t("filters.saveAsDefault")}
 							</Button>
 						</div>
 					</DropdownMenuContent>
@@ -597,26 +601,26 @@ export function TorrentsView() {
 			{selected.size > 0 && (
 				<div className="flex items-center gap-2 p-2 bg-muted rounded-lg overflow-x-auto">
 					<span className="text-sm whitespace-nowrap">
-						{selected.size} selected
+						{tp("torrents.selected", selected.size)}
 					</span>
 					<Button variant="ghost" size="sm" onClick={handleResume}>
-						<Play className="h-4 w-4 mr-1" /> Resume
+						<Play className="h-4 w-4 mr-1" /> {t("common.resume")}
 					</Button>
 					<Button
 						variant="ghost"
 						size="sm"
 						onClick={() => handleForceStart(true)}
 					>
-						<Play className="h-4 w-4 mr-1" /> Force Start
+						<Play className="h-4 w-4 mr-1" /> {t("common.forceStart")}
 					</Button>
 					<Button variant="ghost" size="sm" onClick={handlePause}>
-						<Pause className="h-4 w-4 mr-1" /> Pause
+						<Pause className="h-4 w-4 mr-1" /> {t("common.pause")}
 					</Button>
 					<Button variant="ghost" size="sm" onClick={() => handleDelete(false)}>
-						<Trash2 className="h-4 w-4 mr-1" /> Delete
+						<Trash2 className="h-4 w-4 mr-1" /> {t("common.delete")}
 					</Button>
 					<Button variant="ghost" size="sm" onClick={() => handleDelete(true)}>
-						<Trash2 className="h-4 w-4 mr-1" /> Delete + Files
+						<Trash2 className="h-4 w-4 mr-1" /> {t("common.deleteWithFiles")}
 					</Button>
 				</div>
 			)}
@@ -624,14 +628,13 @@ export function TorrentsView() {
 			{/* Mobile Sort Dropdown */}
 			<div className="md:hidden flex items-center justify-between">
 				<span className="text-sm text-muted-foreground">
-					{sortedTorrents.length} torrents
+					{tp("torrents.count", sortedTorrents.length)}
 				</span>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button variant="outline" size="sm">
 							<ArrowUpDownIcon className="h-4 w-4 mr-2" />
-							Sort:{" "}
-							{columnsDictionary[sortField as keyof typeof columnsDictionary]}
+							{t("common.sortBy", { field: t(`columns.${sortField}`) })}
 							{sortDirection === "asc" ? " ↑" : " ↓"}
 						</Button>
 					</DropdownMenuTrigger>
@@ -641,7 +644,7 @@ export function TorrentsView() {
 								return null;
 							return (
 								<DropdownMenuItem key={field} onClick={() => handleSort(field)}>
-									{columnsDictionary[field as keyof typeof columnsDictionary]}{" "}
+									{t(`columns.${field}`)}{" "}
 									{sortField === field && (sortDirection === "asc" ? "↑" : "↓")}
 								</DropdownMenuItem>
 							);
@@ -681,11 +684,7 @@ export function TorrentsView() {
 														direction={sortDirection}
 														onClick={() => handleSort(field)}
 													>
-														{
-															columnsDictionary[
-																field as keyof typeof columnsDictionary
-															]
-														}
+														{t(`columns.${field}`)}
 													</SortButton>
 												</TableHead>
 											);
@@ -739,14 +738,14 @@ export function TorrentsView() {
 																onClick={() => setDetailTorrent(torrent)}
 															>
 																<Eye className="h-4 w-4 mr-2" />
-																Details
+																{t("common.details")}
 															</DropdownMenuItem>
 															{torrent.magnet_uri && (
 																<DropdownMenuItem
 																	onClick={() => handleCopyMagnet(torrent)}
 																>
 																	<Magnet className="h-4 w-4 mr-2" />
-																	Copy magnet link
+																	{t("common.copyMagnet")}
 																</DropdownMenuItem>
 															)}
 															<DropdownMenuItem
@@ -759,12 +758,12 @@ export function TorrentsView() {
 																{isActive ? (
 																	<>
 																		<Pause className="h-4 w-4 mr-2" />
-																		Pause
+																		{t("common.pause")}
 																	</>
 																) : (
 																	<>
 																		<Play className="h-4 w-4 mr-2" />
-																		Resume
+																		{t("common.resume")}
 																	</>
 																)}
 															</DropdownMenuItem>
@@ -779,12 +778,12 @@ export function TorrentsView() {
 																{isForced ? (
 																	<>
 																		<Rewind className="h-4 w-4 mr-2" />
-																		Disable Force Start
+																		{t("common.disableForceStart")}
 																	</>
 																) : (
 																	<>
 																		<FastForward className="h-4 w-4 mr-2" />
-																		Force Start
+																		{t("common.forceStart")}
 																	</>
 																)}
 															</DropdownMenuItem>
@@ -798,7 +797,7 @@ export function TorrentsView() {
 																}
 															>
 																<Trash2 className="h-4 w-4 mr-2" />
-																Delete
+																{t("common.delete")}
 															</DropdownMenuItem>
 															<DropdownMenuItem
 																onClick={() =>
@@ -810,7 +809,7 @@ export function TorrentsView() {
 																className="text-destructive"
 															>
 																<Trash2 className="h-4 w-4 mr-2" />
-																Delete + Files
+																{t("common.deleteWithFiles")}
 															</DropdownMenuItem>
 														</DropdownMenuContent>
 													</DropdownMenu>
@@ -893,7 +892,7 @@ export function TorrentsView() {
 							{/* Stats row */}
 							<div className="flex items-center gap-3 px-3 py-2 text-[11px] text-muted-foreground">
 								<span className={`font-medium ${stateColor}`}>
-									{getStateLabel(torrent.state, torrent.completion_on)}
+									{getStateLabel(torrent.state, torrent.completion_on, t)}
 								</span>
 								<span className="tabular-nums">{progressPct}%</span>
 								<span>{formatSize(torrent.size, sizeUnit)}</span>
@@ -952,7 +951,7 @@ export function TorrentsView() {
 											})
 										}
 										title={
-											isForced ? "Disable Force Start" : "Enable Force Start"
+											isForced ? t("common.disableForceStart") : t("common.enableForceStart")
 										}
 									>
 										{isForced ? (
@@ -975,7 +974,7 @@ export function TorrentsView() {
 											size="icon"
 											className="h-7 w-7"
 											onClick={() => handleCopyMagnet(torrent)}
-											title="Copy magnet link"
+											title={t("common.copyMagnet")}
 										>
 											<Magnet className="h-3.5 w-3.5" />
 										</Button>
@@ -999,7 +998,7 @@ export function TorrentsView() {
 													})
 												}
 											>
-												Delete torrent
+												{t("torrents.deleteTorrent")}
 											</DropdownMenuItem>
 											<DropdownMenuItem
 												onClick={() =>
@@ -1010,7 +1009,7 @@ export function TorrentsView() {
 												}
 												className="text-destructive"
 											>
-												Delete + Files
+												{t("common.deleteWithFiles")}
 											</DropdownMenuItem>
 										</DropdownMenuContent>
 									</DropdownMenu>
@@ -1025,7 +1024,7 @@ export function TorrentsView() {
 			{totalPages > 1 && (
 				<div className="flex items-center justify-between px-2">
 					<div className="text-sm text-muted-foreground">
-						{sortedTorrents.length} torrents
+						{tp("torrents.count", sortedTorrents.length)}
 					</div>
 					<div className="flex items-center gap-2">
 						<Button

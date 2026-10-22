@@ -6,6 +6,7 @@ import type {
 	TorrentListDefaults,
 	TorrentStateFilter,
 } from "@/types";
+import type { TFunction } from "@/i18n";
 
 export const PAGE_SIZE = 20;
 
@@ -25,16 +26,11 @@ function toggleSetItem<T>(set: Set<T>, value: T): Set<T> {
 	return next;
 }
 
-export function getStateFilterLabel(state: TorrentStateFilter): string {
-	const labels: Record<TorrentStateFilter, string> = {
-		downloading: "Downloading",
-		seeding: "Seeding",
-		completed: "Completed",
-		paused: "Paused",
-		stopped: "Stopped",
-		error: "Error",
-	};
-	return labels[state];
+export function getStateFilterLabel(
+	state: TorrentStateFilter,
+	t: TFunction,
+): string {
+	return t(`state.${state}`);
 }
 
 export function getTrackerHost(tracker: string): string {

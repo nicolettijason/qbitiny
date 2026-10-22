@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { StorageValue, StorageKey } from "@/types/storage";
 import type { TorrentListDefaults } from "@/types";
+import type { LanguagePreference } from "@/i18n";
 import { defaultPreferences, defaultTorrentListDefaults } from "@/constants";
 
 /**
@@ -20,6 +21,7 @@ const STORAGE_KEYS: Record<StorageKey, string> = {
 	qbitwebberInteractiveTabTitle: "qbitwebber_interactiveTabTitle",
 	qbitwebberTableViewSettings: "qbitwebber_tableViewSettings",
 	qbitinyTorrentListDefaults: "qbitiny_torrentListDefaults",
+	qbitinyLanguage: "qbitiny_language",
 };
 
 interface StorageContextType {
@@ -44,6 +46,9 @@ interface StorageContextType {
 
 	qbitinyTorrentListDefaults: TorrentListDefaults;
 	setQbitinyTorrentListDefaults: (value: TorrentListDefaults) => void;
+
+	qbitinyLanguage: LanguagePreference;
+	setQbitinyLanguage: (value: LanguagePreference) => void;
 }
 
 const StorageContext = createContext<StorageContextType | null>(null);
@@ -99,6 +104,13 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 				return defaultTorrentListDefaults;
 			}
 		});
+
+	const [qbitinyLanguage, setQbitinyLanguageState] =
+		useState<LanguagePreference>(
+			() =>
+				(readLocalStorage(STORAGE_KEYS.qbitinyLanguage) as LanguagePreference) ||
+				"auto",
+		);
 
 	// Setters that update both state and localStorage
 	const setQbitUser = useCallback((value: string) => {
@@ -181,6 +193,15 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 		[],
 	);
 
+	const setQbitinyLanguage = useCallback((value: LanguagePreference) => {
+		setQbitinyLanguageState(value);
+		try {
+			localStorage.setItem(STORAGE_KEYS.qbitinyLanguage, value);
+		} catch (error) {
+			console.error("Error saving qbitinyLanguage to storage:", error);
+		}
+	}, []);
+
 	const value: StorageContextType = useMemo(
 		() => ({
 			qbitUser,
@@ -195,6 +216,8 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 			setQbitwebberTableViewSettings,
 			qbitinyTorrentListDefaults,
 			setQbitinyTorrentListDefaults,
+			qbitinyLanguage,
+			setQbitinyLanguage,
 		}),
 		[
 			qbitUser,
@@ -209,6 +232,8 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 			setQbitwebberTableViewSettings,
 			qbitinyTorrentListDefaults,
 			setQbitinyTorrentListDefaults,
+			qbitinyLanguage,
+			setQbitinyLanguage,
 		],
 	);
 

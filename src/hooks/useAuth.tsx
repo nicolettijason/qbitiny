@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		try {
 			qbitClient.setCredentials(newUsername, password);
 			const success = await qbitClient.login();
-			if (!success) throw new Error("Invalid username or password");
+			if (!success) throw new Error("invalid_credentials");
 			storage.setQbitPass(rememberMe ? password : "");
 			setIsAuthenticated(true);
 		} finally {

@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { StorageProvider } from "@/contexts/StorageContext";
+import { I18nProvider } from "@/i18n/I18nProvider";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { LoginForm } from "@/components/LoginForm";
 import { Layout } from "@/components/Layout";
@@ -91,10 +92,12 @@ function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<StorageProvider>
-				<Toaster position="bottom-right" />
-				<AuthProvider>
-					<AppContent />
-				</AuthProvider>
+				<I18nProvider>
+					<Toaster position="bottom-right" />
+					<AuthProvider>
+						<AppContent />
+					</AuthProvider>
+				</I18nProvider>
 			</StorageProvider>
 		</QueryClientProvider>
 	);

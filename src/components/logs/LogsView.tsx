@@ -5,6 +5,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { useLogs } from '@/hooks/useApi'
 import { LogType } from '@/types'
+import { useTranslation } from "@/i18n";
+import type { TranslationKey } from "@/i18n";
 
 const MAX_ENTRIES = 100
 
@@ -38,15 +40,16 @@ function formatTimestamp(timestamp: number): string {
   return new Date(timestamp * 1000).toLocaleTimeString()
 }
 
-const filters: { label: string; value: FilterLevel; className: string }[] = [
-  { label: 'All', value: 'ALL', className: '' },
-  { label: 'Normal', value: LogType.Normal, className: '' },
-  { label: 'Info', value: LogType.Info, className: 'text-blue-400' },
-  { label: 'Warning', value: LogType.Warning, className: 'text-yellow-500' },
-  { label: 'Critical', value: LogType.Critical, className: 'text-destructive' },
+const filters: { labelKey: TranslationKey; value: FilterLevel; className: string }[] = [
+  { labelKey: 'logs.all', value: 'ALL', className: '' },
+  { labelKey: 'logs.normal', value: LogType.Normal, className: '' },
+  { labelKey: 'logs.info', value: LogType.Info, className: 'text-blue-400' },
+  { labelKey: 'logs.warning', value: LogType.Warning, className: 'text-yellow-500' },
+  { labelKey: 'logs.critical', value: LogType.Critical, className: 'text-destructive' },
 ]
 
 export function LogsView() {
+  const { t } = useTranslation()
   const { data: logs, isLoading } = useLogs()
   const [filter, setFilter] = useState<FilterLevel>('ALL')
 
@@ -61,18 +64,18 @@ export function LogsView() {
   )
 
   if (isLoading) {
-    return <div className="text-center py-8 text-muted-foreground">Loading logs...</div>
+    return <div className="text-center py-8 text-muted-foreground">{t("logs.loading")}</div>
   }
 
   if (!logs || logs.length === 0) {
-    return <div className="text-center py-8 text-muted-foreground">No logs</div>
+    return <div className="text-center py-8 text-muted-foreground">{t("logs.empty")}</div>
   }
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle>Logs</CardTitle>
+          <CardTitle>{t("logs.title")}</CardTitle>
           <div className="flex items-center gap-1 flex-wrap">
             {filters.map((f) => (
               <Button
@@ -82,13 +85,13 @@ export function LogsView() {
                 className={`h-7 text-xs ${f.className}`}
                 onClick={() => setFilter(f.value)}
               >
-                {f.label}
+                {t(f.labelKey)}
               </Button>
             ))}
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Showing the last {MAX_ENTRIES} entries, most recent first
+          {t("logs.showingLast", { count: MAX_ENTRIES })}
         </p>
       </CardHeader>
       <CardContent className="p-0">
@@ -107,7 +110,7 @@ export function LogsView() {
               </div>
             ))}
             {filtered.length === 0 && (
-              <p className="text-center text-muted-foreground py-4">No logs for this level</p>
+              <p className="text-center text-muted-foreground py-4">{t("logs.emptyLevel")}</p>
             )}
           </div>
         </ScrollArea>

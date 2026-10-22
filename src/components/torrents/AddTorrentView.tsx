@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAddTorrent } from '@/hooks/useApi'
 import { toast } from '@/hooks/use-toast'
+import { useTranslation } from "@/i18n";
 
 export function AddTorrentView() {
+  const { t } = useTranslation()
   const [url, setUrl] = useState('')
   const [category, setCategory] = useState('')
   const [savePath, setSavePath] = useState('')
@@ -23,10 +25,10 @@ export function AddTorrentView() {
     if (!url) return
     try {
       await addTorrent.mutateAsync({ url, category, savePath })
-      toast.success('Torrent added successfully')
+      toast.success(t("add.added"))
       setUrl('')
     } catch {
-      toast.error('Failed to add torrent')
+      toast.error(t("common.addTorrentFailed"))
     }
   }
 
@@ -36,11 +38,11 @@ export function AddTorrentView() {
     if (!file) return
     try {
       await addTorrent.mutateAsync({ file, category, savePath })
-      toast.success('Torrent added successfully')
+      toast.success(t("add.added"))
       setSelectedFile(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
     } catch {
-      toast.error('Failed to add torrent')
+      toast.error(t("common.addTorrentFailed"))
     }
   }
 
@@ -51,26 +53,26 @@ export function AddTorrentView() {
     if (file && file.name.endsWith('.torrent')) {
       setSelectedFile(file)
     } else {
-      toast.error('Please drop a .torrent file')
+      toast.error(t("add.dropTorrentFile"))
     }
-  }, [])
+  }, [t])
 
   const sharedFields = (
     <>
       <div className="space-y-2">
-        <Label htmlFor="category">Category</Label>
+        <Label htmlFor="category">{t("common.category")}</Label>
         <Input
           id="category"
-          placeholder="e.g. movies"
+          placeholder={t("add.categoryPlaceholder")}
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="savePath">Save Path</Label>
+        <Label htmlFor="savePath">{t("add.savePath")}</Label>
         <Input
           id="savePath"
-          placeholder="Leave empty for default"
+          placeholder={t("add.savePathPlaceholder")}
           value={savePath}
           onChange={(e) => setSavePath(e.target.value)}
         />
@@ -82,7 +84,7 @@ export function AddTorrentView() {
     <div className="max-w-md mx-auto space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Add Torrent</CardTitle>
+          <CardTitle>{t("add.title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="url">
@@ -93,18 +95,18 @@ export function AddTorrentView() {
               </TabsTrigger>
               <TabsTrigger value="file" className="flex-1 gap-2">
                 <Upload className="h-4 w-4" />
-                File
+                {t("add.file")}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="url">
               <form onSubmit={handleSubmitUrl} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="url">Torrent URL or magnet link</Label>
+                  <Label htmlFor="url">{t("add.urlLabel")}</Label>
                   <Input
                     id="url"
                     type="text"
-                    placeholder="magnet:?xt=... or https://..."
+                    placeholder={t("add.urlPlaceholder")}
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     required
@@ -113,7 +115,7 @@ export function AddTorrentView() {
                 {sharedFields}
                 <Button type="submit" className="w-full" disabled={addTorrent.isPending}>
                   {addTorrent.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Add Torrent
+                  {t("add.title")}
                 </Button>
               </form>
             </TabsContent>
@@ -134,12 +136,12 @@ export function AddTorrentView() {
                   {selectedFile ? (
                     <div className="text-center">
                       <p className="text-sm font-medium text-primary truncate max-w-[240px]">{selectedFile.name}</p>
-                      <p className="text-xs text-muted-foreground mt-1">Click to change</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t("add.clickToChange")}</p>
                     </div>
                   ) : (
                     <div className="text-center">
-                      <p className="text-sm font-medium">Drop .torrent file here</p>
-                      <p className="text-xs text-muted-foreground mt-1">or click to browse</p>
+                      <p className="text-sm font-medium">{t("add.dropHere")}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t("add.orBrowse")}</p>
                     </div>
                   )}
                   <input
@@ -153,7 +155,7 @@ export function AddTorrentView() {
                 {sharedFields}
                 <Button type="submit" className="w-full" disabled={addTorrent.isPending || (!selectedFile && !fileInputRef.current?.files?.[0])}>
                   {addTorrent.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Add Torrent
+                  {t("add.title")}
                 </Button>
               </form>
             </TabsContent>

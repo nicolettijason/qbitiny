@@ -57,6 +57,7 @@ import {
 	useTorrentPeers,
 	useTorrentTrackers,
 } from "@/hooks/useApi";
+import { useTranslation } from "@/i18n";
 
 interface TorrentDetailDialogProps {
 	torrent: Torrent | null;
@@ -101,6 +102,7 @@ function InfoRow({
 	value: React.ReactNode;
 	mono?: boolean;
 }) {
+	const { t } = useTranslation();
 	const [copied, setCopied] = useState(false);
 	const isString = typeof value === "string";
 
@@ -119,9 +121,9 @@ function InfoRow({
 			<span
 				className={`text-xs break-all flex-1 ${mono ? "font-mono text-[10px]" : ""} ${isString ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
 				onClick={isString ? handleCopy : undefined}
-				title={isString ? (copied ? "Copied!" : "Click to copy") : undefined}
+				title={isString ? (copied ? t("detail.copied") : t("detail.clickToCopy")) : undefined}
 			>
-				{copied ? <span className="text-green-500">Copied!</span> : value}
+				{copied ? <span className="text-green-500">{t("detail.copied")}</span> : value}
 			</span>
 		</div>
 	);
@@ -250,15 +252,16 @@ function TrackerStatBadges({
 	down: number;
 	next: string;
 }) {
+	const { t } = useTranslation();
 	return (
 		<div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[9px] text-muted-foreground/80">
 			{tier !== undefined && (
 				<span>
-					Tier <span className="text-muted-foreground">{tier}</span>
+					{t("detail.tier")} <span className="text-muted-foreground">{tier}</span>
 				</span>
 			)}
 			<span className={getTrackerStatusColor(status)}>
-				{getTrackerStatusLabel(status)}
+				{getTrackerStatusLabel(status, t)}
 			</span>
 			<span>
 				S <span className="text-muted-foreground">{seeds >= 0 ? seeds : "—"}</span>
@@ -273,14 +276,15 @@ function TrackerStatBadges({
 				D <span className="text-muted-foreground">{down >= 0 ? down : "—"}</span>
 			</span>
 			<span>
-				Next <span className="text-muted-foreground">{next}</span>
+				{t("detail.next")} <span className="text-muted-foreground">{next}</span>
 			</span>
 		</div>
 	);
 }
 
 function EndpointRow({ endpoint }: { endpoint: TrackerEndpoint }) {
-	const nextLabel = formatNextAnnounce(endpoint.next_announce);
+	const { t } = useTranslation();
+	const nextLabel = formatNextAnnounce(endpoint.next_announce, t);
 
 	return (
 		<div
@@ -297,7 +301,7 @@ function EndpointRow({ endpoint }: { endpoint: TrackerEndpoint }) {
 				<span
 					className={`w-24 text-center truncate ${getTrackerStatusColor(endpoint.status)}`}
 				>
-					{getTrackerStatusLabel(endpoint.status)}
+					{getTrackerStatusLabel(endpoint.status, t)}
 				</span>
 				<span className="w-10 text-center">
 					{endpoint.num_seeds >= 0 ? endpoint.num_seeds : "—"}
@@ -333,9 +337,10 @@ function EndpointRow({ endpoint }: { endpoint: TrackerEndpoint }) {
 }
 
 function TrackerRow({ tracker }: { tracker: TorrentTracker }) {
+	const { t } = useTranslation();
 	const [expanded, setExpanded] = useState(false);
 	const hasEndpoints = tracker.endpoints && tracker.endpoints.length > 0;
-	const nextLabel = formatNextAnnounce(tracker.next_announce);
+	const nextLabel = formatNextAnnounce(tracker.next_announce, t);
 
 	return (
 		<div>
@@ -362,7 +367,7 @@ function TrackerRow({ tracker }: { tracker: TorrentTracker }) {
 					<span
 						className={`w-24 text-center truncate ${getTrackerStatusColor(tracker.status)}`}
 					>
-						{getTrackerStatusLabel(tracker.status)}
+						{getTrackerStatusLabel(tracker.status, t)}
 					</span>
 					<span className="w-10 text-center">
 						{tracker.num_seeds >= 0 ? tracker.num_seeds : "—"}
@@ -423,6 +428,7 @@ export function TorrentDetailDialog({
 	onForceStartChange,
 	onDelete,
 }: TorrentDetailDialogProps) {
+	const { t, tp } = useTranslation();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState<null | boolean>(
 		null,
 	);
@@ -449,7 +455,7 @@ export function TorrentDetailDialog({
 	const isActive = !isStoppedState(torrent.state);
 	const progressPct = Math.round(torrent.progress * 100);
 	const stateColor = getStateColor(torrent.state, torrent.completion_on);
-	const stateLabel = getStateLabel(torrent.state, torrent.completion_on);
+	const stateLabel = getStateLabel(torrent.state, torrent.completion_on, t);
 
 	let trackerHost = "";
 	try {
@@ -469,7 +475,7 @@ export function TorrentDetailDialog({
 		try {
 			await setFilePriority.mutateAsync({ hash: torrent.hash, id, priority });
 		} catch {
-			toast.error("Failed to update file priority");
+			toast.error(t("detail.filePriorityFailed"));
 		}
 	};
 
@@ -586,7 +592,7 @@ export function TorrentDetailDialog({
 						<div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
 							<StatCard
 								icon={<Download className="h-3 w-3" />}
-								label="Download"
+								label={t("detail.download")}
 								value={
 									<span className="text-blue-500">
 										{formatSize(torrent.dlspeed, sizeUnit)}/s
@@ -595,7 +601,7 @@ export function TorrentDetailDialog({
 							/>
 							<StatCard
 								icon={<Upload className="h-3 w-3" />}
-								label="Upload"
+								label={t("detail.upload")}
 								value={
 									<span className="text-green-500">
 										{formatSize(torrent.upspeed, sizeUnit)}/s
@@ -604,12 +610,12 @@ export function TorrentDetailDialog({
 							/>
 							<StatCard
 								icon={<Users className="h-3 w-3" />}
-								label="Seeds"
+								label={t("common.seeds")}
 								value={`${torrent.num_seeds} (${torrent.num_complete})`}
 							/>
 							<StatCard
 								icon={<Users className="h-3 w-3" />}
-								label="Peers"
+								label={t("detail.peers")}
 								value={`${torrent.num_leechs} (${torrent.num_incomplete})`}
 							/>
 						</div>
@@ -618,32 +624,32 @@ export function TorrentDetailDialog({
 						<div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
 							<StatCard
 								icon={<HardDrive className="h-3 w-3" />}
-								label="Size"
+								label={t("common.size")}
 								value={formatSize(torrent.size, sizeUnit)}
 							/>
 							<StatCard
 								icon={<Download className="h-3 w-3" />}
-								label="Downloaded"
+								label={t("detail.downloaded")}
 								value={formatSize(torrent.downloaded, sizeUnit)}
 							/>
 							<StatCard
 								icon={<Upload className="h-3 w-3" />}
-								label="Uploaded"
+								label={t("detail.uploaded")}
 								value={formatSize(torrent.uploaded, sizeUnit)}
 							/>
 							<StatCard
 								icon={<TrendingUp className="h-3 w-3" />}
-								label="Ratio"
+								label={t("detail.ratio")}
 								value={torrent.ratio.toFixed(3)}
 							/>
 							<StatCard
 								icon={<Clock className="h-3 w-3" />}
-								label="ETA"
+								label={t("detail.eta")}
 								value={formatTime(torrent.eta)}
 							/>
 							<StatCard
 								icon={<Zap className="h-3 w-3" />}
-								label="Active time"
+								label={t("detail.activeTime")}
 								value={formatTime(torrent.time_active)}
 							/>
 						</div>
@@ -651,58 +657,67 @@ export function TorrentDetailDialog({
 						{/* Details */}
 						<div className="rounded-lg border border-border/60 overflow-hidden">
 							<div className="px-3 py-2 bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-								Details
+								{t("common.details")}
 							</div>
 							<div className="px-3">
 								<InfoRow label="Hash" value={torrent.hash} mono />
-								<InfoRow label="Category" value={torrent.category || "—"} />
+								<InfoRow label={t("common.category")} value={torrent.category || "—"} />
 								{tags.length > 0 && (
-									<InfoRow label="Tags" value={tags.join(", ")} />
+									<InfoRow label={t("detail.tags")} value={tags.join(", ")} />
 								)}
-								<InfoRow label="Save path" value={torrent.save_path} />
+								<InfoRow label={t("detail.savePath")} value={torrent.save_path} />
 								<InfoRow
-									label="Tracker"
+									label={t("detail.tracker")}
 									value={trackerHost || torrent.tracker}
 								/>
 								<InfoRow
-									label="Added on"
+									label={t("detail.addedOn")}
 									value={formatDate(torrent.added_on)}
 								/>
 								{torrent.completion_on > 0 && (
 									<InfoRow
-										label="Completed on"
+										label={t("detail.completedOn")}
 										value={formatDate(torrent.completion_on)}
 									/>
 								)}
 								<InfoRow
-									label="Priority"
+									label={t("detail.priority")}
 									value={
-										torrent.priority > 0 ? String(torrent.priority) : "N/A"
+										torrent.priority > 0 ? String(torrent.priority) : t("detail.na")
 									}
 								/>
 								<InfoRow
-									label="Seeds (total)"
-									value={`${torrent.num_seeds} connected / ${torrent.num_complete} in swarm`}
+									label={t("detail.seedsTotal")}
+									value={t("detail.connectedInSwarm", {
+									connected: torrent.num_seeds,
+									swarm: torrent.num_complete,
+								})}
 								/>
 								<InfoRow
-									label="Peers (total)"
-									value={`${torrent.num_leechs} connected / ${torrent.num_incomplete} in swarm`}
+									label={t("detail.peersTotal")}
+									value={t("detail.connectedInSwarm", {
+									connected: torrent.num_leechs,
+									swarm: torrent.num_incomplete,
+								})}
 								/>
 								<InfoRow
-									label="Avg DL speed"
+									label={t("detail.avgDl")}
 									value={`${formatSize(torrent.dl_speed_avg, sizeUnit)}/s`}
 								/>
 								<InfoRow
-									label="Avg UP speed"
+									label={t("detail.avgUp")}
 									value={`${formatSize(torrent.up_speed_avg, sizeUnit)}/s`}
 								/>
 								<InfoRow
-									label="Downloaded"
+									label={t("detail.downloaded")}
 									value={formatSize(torrent.downloaded, sizeUnit)}
 								/>
 								<InfoRow
-									label="Uploaded"
-									value={`${formatSize(torrent.uploaded, sizeUnit)} / session ${formatSize(torrent.uploaded_session, sizeUnit)}`}
+									label={t("detail.uploaded")}
+									value={t("detail.uploadedSession", {
+									total: formatSize(torrent.uploaded, sizeUnit),
+									session: formatSize(torrent.uploaded_session, sizeUnit),
+								})}
 								/>
 							</div>
 						</div>
@@ -714,7 +729,7 @@ export function TorrentDetailDialog({
 							>
 								<span className="flex items-center gap-1.5">
 									<Files className="h-3 w-3" />
-									Files
+									{t("detail.files")}
 								</span>
 								{showFiles ? (
 									<ChevronUp className="h-3 w-3" />
@@ -725,9 +740,9 @@ export function TorrentDetailDialog({
 							{showFiles && (
 								<>
 									<div className="px-3 py-2 border-b border-b-muted/40 text-[10px] text-muted-foreground flex items-center justify-between">
-										<span>{filesData?.length || 0} files</span>
+										<span>{tp("detail.filesCount", filesData?.length || 0)}</span>
 										<span>
-											{selectedFilesCount} selected ·{" "}
+											{tp("torrents.selected", selectedFilesCount)} ·{" "}
 											{formatSize(selectedFilesSize, sizeUnit)} /{" "}
 											{formatSize(totalFilesSize, sizeUnit)}
 										</span>
@@ -735,7 +750,7 @@ export function TorrentDetailDialog({
 									<div className="px-2 py-2 max-h-72 overflow-y-auto">
 										{filesLoading ? (
 											<p className="text-[10px] text-muted-foreground px-1">
-												Loading files...
+												{t("detail.loadingFiles")}
 											</p>
 										) : fileTree.length > 0 ? (
 											<div className="space-y-0.5">
@@ -751,7 +766,7 @@ export function TorrentDetailDialog({
 											</div>
 										) : (
 											<p className="text-[10px] text-muted-foreground px-1">
-												No files.
+												{t("detail.noFiles")}
 											</p>
 										)}
 									</div>
@@ -766,7 +781,7 @@ export function TorrentDetailDialog({
 							>
 								<span className="flex items-center gap-1.5">
 									<Server className="h-3 w-3" />
-									Trackers
+									{t("filters.trackers")}
 								</span>
 								{showTrackers ? (
 									<ChevronUp className="h-3 w-3" />
@@ -778,7 +793,7 @@ export function TorrentDetailDialog({
 								<div className="overflow-x-auto">
 									<div className="px-3 py-2 border-b border-b-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
 										<span className="sm:hidden">
-											Trackers
+											{t("filters.trackers")}
 											{trackersInfo && trackersInfo.length > 0
 												? ` (${trackersInfo.length})`
 												: ""}
@@ -787,20 +802,20 @@ export function TorrentDetailDialog({
 											<div className="hidden sm:flex items-center gap-2 min-w-[500px]">
 												<span className="w-3 flex-shrink-0" />
 												<span className="flex-1">URL</span>
-												<span className="w-9 text-center">Tier</span>
-												<span className="w-24 text-center">Status</span>
-												<span className="w-10 text-center">Seeds</span>
-												<span className="w-10 text-center">Peers</span>
-												<span className="w-10 text-center">Leech</span>
-												<span className="w-14 text-right">Down</span>
-												<span className="w-16 text-right">Next</span>
+												<span className="w-9 text-center">{t("detail.tier")}</span>
+												<span className="w-24 text-center">{t("detail.status")}</span>
+												<span className="w-10 text-center">{t("common.seeds")}</span>
+												<span className="w-10 text-center">{t("detail.peers")}</span>
+												<span className="w-10 text-center">{t("detail.leech")}</span>
+												<span className="w-14 text-right">{t("detail.down")}</span>
+												<span className="w-16 text-right">{t("detail.next")}</span>
 											</div>
 										)}
 									</div>
 									<div className="px-3 py-2">
 										{trackersLoading ? (
 											<p className="text-[10px] text-muted-foreground">
-												Loading trackers...
+												{t("detail.loadingTrackers")}
 											</p>
 										) : trackersInfo && trackersInfo.length > 0 ? (
 											<div className="space-y-1 sm:min-w-[500px]">
@@ -813,7 +828,7 @@ export function TorrentDetailDialog({
 											</div>
 										) : (
 											<p className="text-[10px] text-muted-foreground">
-												No trackers found.
+												{t("detail.noTrackers")}
 											</p>
 										)}
 									</div>
@@ -828,7 +843,7 @@ export function TorrentDetailDialog({
 							>
 								<span className="flex items-center gap-1.5">
 									<UserRound className="h-3 w-3" />
-									Peers
+									{t("detail.peers")}
 								</span>
 								{showPeers ? (
 									<ChevronUp className="h-3 w-3" />
@@ -842,17 +857,17 @@ export function TorrentDetailDialog({
 										{peersInfo?.peers ? (
 											<div className="flex items-center justify-between">
 												<span className="w-1/3">IP</span>
-												<span className="w-1/3">Port</span>
-												<span className="w-1/3">DL Speed</span>
+												<span className="w-1/3">{t("detail.port")}</span>
+												<span className="w-1/3">{t("detail.dlSpeed")}</span>
 											</div>
 										) : (
-											<span>Peers</span>
+											<span>{t("detail.peers")}</span>
 										)}
 									</div>
 									<div className="px-3 py-2">
 										{peersLoading ? (
 											<p className="text-[10px] text-muted-foreground">
-												Loading peers...
+												{t("detail.loadingPeers")}
 											</p>
 										) : peersInfo?.peers ? (
 											<div className="space-y-1">
@@ -878,7 +893,7 @@ export function TorrentDetailDialog({
 											</div>
 										) : (
 											<p className="text-[10px] text-muted-foreground">
-												No peers found.
+												{t("detail.noPeers")}
 											</p>
 										)}
 									</div>
@@ -895,7 +910,7 @@ export function TorrentDetailDialog({
 								>
 									<span className="flex items-center gap-1.5">
 										<Magnet className="h-3 w-3" />
-										Magnet link
+										{t("detail.magnetLink")}
 									</span>
 									{showMagnet ? (
 										<ChevronUp className="h-3 w-3" />
@@ -914,12 +929,12 @@ export function TorrentDetailDialog({
 											className="h-7 text-xs flex-shrink-0"
 											onClick={async () => {
 												if (await copyToClipboard(torrent.magnet_uri))
-													toast.success("Magnet link copied");
-												else toast.error("Could not copy the magnet link");
+													toast.success(t("common.magnetCopied"));
+												else toast.error(t("common.magnetCopyFailed"));
 											}}
 										>
 											<Copy className="h-3 w-3 mr-1" />
-											Copy
+											{t("detail.copy")}
 										</Button>
 									</div>
 								)}
@@ -934,8 +949,8 @@ export function TorrentDetailDialog({
 						<div className="flex items-center gap-2 flex-wrap">
 							<span className="text-sm text-muted-foreground flex-1">
 								{showDeleteConfirm
-									? "Delete torrent and files?"
-									: "Delete torrent?"}
+									? t("detail.deleteWithFilesConfirm")
+									: t("detail.deleteConfirm")}
 							</span>
 							<Button
 								variant="destructive"
@@ -946,14 +961,14 @@ export function TorrentDetailDialog({
 									onOpenChange(false);
 								}}
 							>
-								Confirm
+								{t("common.confirm")}
 							</Button>
 							<Button
 								variant="ghost"
 								size="sm"
 								onClick={() => setShowDeleteConfirm(null)}
 							>
-								Cancel
+								{t("common.cancel")}
 							</Button>
 						</div>
 					) : (
@@ -974,12 +989,12 @@ export function TorrentDetailDialog({
 									{isActive ? (
 										<>
 											<Pause className="h-3.5 w-3.5" />
-											Pause
+											{t("common.pause")}
 										</>
 									) : (
 										<>
 											<Play className="h-3.5 w-3.5" />
-											Resume
+											{t("common.resume")}
 										</>
 									)}
 								</Button>
@@ -994,12 +1009,12 @@ export function TorrentDetailDialog({
 									{!torrent.force_start ? (
 										<>
 											<FastForward className="h-3.5 w-3.5" />
-											Force Start
+											{t("common.forceStart")}
 										</>
 									) : (
 										<>
 											<Rewind className="h-3.5 w-3.5" />
-											Disable Force Start
+											{t("common.disableForceStart")}
 										</>
 									)}
 								</Button>
@@ -1012,7 +1027,7 @@ export function TorrentDetailDialog({
 									className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60"
 								>
 									<Trash2 className="h-3.5 w-3.5" />
-									Delete
+									{t("common.delete")}
 								</Button>
 								<Button
 									size="sm"
@@ -1020,7 +1035,7 @@ export function TorrentDetailDialog({
 									onClick={() => setShowDeleteConfirm(true)}
 									className="gap-1.5"
 								>
-									<Trash2 className="h-3.5 w-3.5" />+ Files
+									<Trash2 className="h-3.5 w-3.5" />{t("detail.plusFiles")}
 								</Button>
 							</div>
 						</div>

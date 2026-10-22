@@ -20,6 +20,7 @@ import {
 import { Tooltip } from "radix-ui";
 import { Preferences } from "@/types";
 import { qbittorrentLocales } from "@/constants";
+import { useTranslation } from "@/i18n";
 
 interface GeneralSettingsTabProps {
 	preferences: Preferences;
@@ -37,19 +38,20 @@ export function GeneralSettingsTab({
 	onUpdatePreference,
 	onSave,
 }: GeneralSettingsTabProps) {
+	const { t } = useTranslation();
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>General Settings</CardTitle>
+				<CardTitle>{t("settings.general.title")}</CardTitle>
 				<CardDescription>
-					Basic download and file settings
+					{t("settings.general.description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="flex items-end flex-wrap min-w-48 gap-4">
 					<div className="space-y-2 flex-1">
 						<Label htmlFor="locale">
-							Language{" "}
+							{t("settings.general.qbtLanguage")}{" "}
 							<Tooltip.Provider>
 								<Tooltip.Root>
 									<Tooltip.Trigger asChild>
@@ -62,9 +64,7 @@ export function GeneralSettingsTab({
 											className="flex max-w-xs rounded-md bg-background/95 p-2 text-sm text-white shadow-lg"
 											sideOffset={5}
 										>
-											This setting is currently read-only and cannot be
-											changed. The language does not affect the web
-											interface, which is always in English.
+											{t("settings.general.qbtLanguageHint")}
 											<Tooltip.Arrow className="fill-background/95" />
 										</Tooltip.Content>
 									</Tooltip.Portal>
@@ -83,7 +83,7 @@ export function GeneralSettingsTab({
 						/>
 					</div>
 					<div className="space-y-2 w-36">
-						<Label htmlFor="sizeUnit">Size Unit</Label>
+						<Label htmlFor="sizeUnit">{t("settings.general.sizeUnit")}</Label>
 						<Select
 							value={preferences.sizeUnit}
 							onValueChange={(value) =>
@@ -94,7 +94,7 @@ export function GeneralSettingsTab({
 							}
 						>
 							<SelectTrigger className="w-full max-w-48">
-								<SelectValue placeholder="Select size unit" />
+								<SelectValue placeholder={t("settings.general.selectSizeUnit")} />
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="B">Bytes (B)</SelectItem>
@@ -104,7 +104,7 @@ export function GeneralSettingsTab({
 					</div>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="save_path">Default Save Path</Label>
+					<Label htmlFor="save_path">{t("settings.general.savePath")}</Label>
 					<Input
 						id="save_path"
 						value={preferences.save_path}
@@ -115,7 +115,7 @@ export function GeneralSettingsTab({
 					/>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="temp_path">Temp Folder</Label>
+					<Label htmlFor="temp_path">{t("settings.general.tempFolder")}</Label>
 					<Input
 						id="temp_path"
 						value={preferences.temp_path}
@@ -133,7 +133,7 @@ export function GeneralSettingsTab({
 							onUpdatePreference("temp_path_enabled", !!checked)
 						}
 					/>
-					<Label htmlFor="temp_path_enabled">Enable temp folder</Label>
+					<Label htmlFor="temp_path_enabled">{t("settings.general.enableTemp")}</Label>
 				</div>
 				<div className="flex items-center space-x-2">
 					<Checkbox
@@ -144,7 +144,7 @@ export function GeneralSettingsTab({
 						}
 					/>
 					<Label htmlFor="create_subfolder_enabled">
-						Create subfolder
+						{t("settings.general.createSubfolder")}
 					</Label>
 				</div>
 				<div className="flex items-center space-x-2">
@@ -155,7 +155,7 @@ export function GeneralSettingsTab({
 							onUpdatePreference("start_paused_enabled", !!checked)
 						}
 					/>
-					<Label htmlFor="start_paused_enabled">Start paused</Label>
+					<Label htmlFor="start_paused_enabled">{t("settings.general.startPaused")}</Label>
 				</div>
 				<div className="flex items-center space-x-2">
 					<Checkbox
@@ -166,11 +166,11 @@ export function GeneralSettingsTab({
 						}
 					/>
 					<Label htmlFor="auto_tmm_enabled">
-						Auto torrent management
+						{t("settings.general.autoTmm")}
 					</Label>
 				</div>
 				<Button onClick={onSave} disabled={saving}>
-					Save General Settings
+					{t("settings.general.save")}
 				</Button>
 			</CardContent>
 		</Card>

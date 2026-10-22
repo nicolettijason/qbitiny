@@ -5,8 +5,11 @@ import { defaultPreferences } from "@/constants";
 import { getStoredTableSettings } from "@/helpers";
 import { qbitClient } from "@/lib/api";
 import { useStoragePreferences } from "./useStoragePreferences";
+import { useTranslation } from "@/i18n";
+import type { TranslationKey } from "@/i18n";
 
 export function useSettingsPreferences() {
+	const { t } = useTranslation();
 	const { sizeUnit, setSizeUnit, tableViewSettings } = useStoragePreferences();
 	const [preferences, setPreferences] = useState<Preferences>(
 		defaultPreferences as Preferences,
@@ -46,7 +49,7 @@ export function useSettingsPreferences() {
 			} as Preferences);
 		} catch (error) {
 			console.error("Failed to load preferences:", error);
-			toast.error("Failed to load preferences");
+			toast.error(t("settings.loadFailed"));
 		} finally {
 			setLoading(false);
 		}
@@ -111,11 +114,13 @@ export function useSettingsPreferences() {
 
 			await qbitClient.setPreferences(prefsToSave);
 			toast.success(
-				`${section.charAt(0).toUpperCase() + section.slice(1)} settings saved`,
+				t("settings.saved", {
+					section: t(`settings.tabs.${section}` as TranslationKey),
+				}),
 			);
 		} catch (error) {
 			console.error("Failed to save preferences:", error);
-			toast.error("Failed to save settings");
+			toast.error(t("settings.saveFailed"));
 		} finally {
 			setSaving(false);
 		}
