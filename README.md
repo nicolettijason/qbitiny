@@ -54,7 +54,7 @@ npm run demo:build
 ## Production build
 
 ```bash
-npm run release
+npm run build
 ```
 
 ## Disclaimer
