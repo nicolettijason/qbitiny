@@ -7,7 +7,8 @@ import React, {
 	useMemo,
 } from "react";
 import { StorageValue, StorageKey } from "@/types/storage";
-import { defaultPreferences } from "@/constants";
+import type { TorrentListDefaults } from "@/types";
+import { defaultPreferences, defaultTorrentListDefaults } from "@/constants";
 
 /**
  * Storage key mappings for localStorage
@@ -18,6 +19,7 @@ const STORAGE_KEYS: Record<StorageKey, string> = {
 	qbitwebberSizeUnit: "qbitwebber_sizeUnit",
 	qbitwebberInteractiveTabTitle: "qbitwebber_interactiveTabTitle",
 	qbitwebberTableViewSettings: "qbitwebber_tableViewSettings",
+	qbitinyTorrentListDefaults: "qbitiny_torrentListDefaults",
 };
 
 interface StorageContextType {
@@ -39,6 +41,9 @@ interface StorageContextType {
 	setQbitwebberTableViewSettings: (
 		value: typeof defaultPreferences.columns,
 	) => void;
+
+	qbitinyTorrentListDefaults: TorrentListDefaults;
+	setQbitinyTorrentListDefaults: (value: TorrentListDefaults) => void;
 }
 
 const StorageContext = createContext<StorageContextType | null>(null);
@@ -81,6 +86,17 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 			} catch (e) {
 				console.error("Failed to parse table view settings:", e);
 				return defaultPreferences.columns;
+			}
+		});
+	const [qbitinyTorrentListDefaults, setQbitinyTorrentListDefaultsState] =
+		useState<TorrentListDefaults>(() => {
+			const stored = readLocalStorage(STORAGE_KEYS.qbitinyTorrentListDefaults);
+			if (!stored) return defaultTorrentListDefaults;
+			try {
+				return { ...defaultTorrentListDefaults, ...JSON.parse(stored) };
+			} catch (e) {
+				console.error("Failed to parse torrent list defaults:", e);
+				return defaultTorrentListDefaults;
 			}
 		});
 
@@ -145,6 +161,24 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 		}
 	}, []);
 
+	const setQbitinyTorrentListDefaults = useCallback(
+		(value: TorrentListDefaults) => {
+			setQbitinyTorrentListDefaultsState(value);
+			try {
+				localStorage.setItem(
+					STORAGE_KEYS.qbitinyTorrentListDefaults,
+					JSON.stringify(value),
+				);
+			} catch (error) {
+				console.error(
+					"Error saving qbitinyTorrentListDefaults to storage:",
+					error,
+				);
+			}
+		},
+		[],
+	);
+
 	const value: StorageContextType = useMemo(
 		() => ({
 			qbitUser,
@@ -157,6 +191,8 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 			setQbitwebberInteractiveTabTitle,
 			qbitwebberTableViewSettings,
 			setQbitwebberTableViewSettings,
+			qbitinyTorrentListDefaults,
+			setQbitinyTorrentListDefaults,
 		}),
 		[
 			qbitUser,
@@ -169,6 +205,8 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 			setQbitwebberInteractiveTabTitle,
 			qbitwebberTableViewSettings,
 			setQbitwebberTableViewSettings,
+			qbitinyTorrentListDefaults,
+			setQbitinyTorrentListDefaults,
 		],
 	);
 

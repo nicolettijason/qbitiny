@@ -13,5 +13,7 @@ export function useStoragePreferences() {
 	setInteractiveTabTitle: storage.setQbitwebberInteractiveTabTitle,
 		tableViewSettings: storage.qbitwebberTableViewSettings,
 		setTableViewSettings: storage.setQbitwebberTableViewSettings,
+		torrentListDefaults: storage.qbitinyTorrentListDefaults,
+		setTorrentListDefaults: storage.setQbitinyTorrentListDefaults,
 	};
 }

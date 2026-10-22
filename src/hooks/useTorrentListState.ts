@@ -1,14 +1,11 @@
 import { useMemo, useState } from "react";
-import type { Columns, Torrent } from "@/types";
-
-export type SortDirection = "asc" | "desc";
-export type TorrentStateFilter =
-	| "downloading"
-	| "seeding"
-	| "completed"
-	| "paused"
-	| "stopped"
-	| "error";
+import type {
+	Columns,
+	SortDirection,
+	Torrent,
+	TorrentListDefaults,
+	TorrentStateFilter,
+} from "@/types";
 
 export const PAGE_SIZE = 20;
 
@@ -40,7 +37,7 @@ export function getStateFilterLabel(state: TorrentStateFilter): string {
 	return labels[state];
 }
 
-function getTrackerHost(tracker: string): string {
+export function getTrackerHost(tracker: string): string {
 	try {
 		return new URL(tracker).hostname || tracker;
 	} catch {
@@ -151,21 +148,27 @@ function compareTorrents(a: Torrent, b: Torrent, field: Columns): number {
 
 /**
  * Selection, search, filters, sorting and pagination state for the torrent list.
+ * `defaults` only seeds the initial sort and filters.
  */
-export function useTorrentListState(torrents: Torrent[] | undefined) {
+export function useTorrentListState(
+	torrents: Torrent[] | undefined,
+	defaults: TorrentListDefaults,
+) {
 	const [selected, setSelected] = useState<Set<string>>(new Set());
-	const [sortField, setSortField] = useState<Columns>("added_on");
-	const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+	const [sortField, setSortField] = useState<Columns>(defaults.sortField);
+	const [sortDirection, setSortDirection] = useState<SortDirection>(
+		defaults.sortDirection,
+	);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedStates, setSelectedStates] = useState<Set<TorrentStateFilter>>(
-		new Set(),
+		() => new Set(defaults.states),
 	);
 	const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
-		new Set(),
+		() => new Set(defaults.categories),
 	);
 	const [selectedTrackers, setSelectedTrackers] = useState<Set<string>>(
-		new Set(),
+		() => new Set(defaults.trackers),
 	);
 
 	const toggleStateFilter = (state: TorrentStateFilter) => {
@@ -193,19 +196,30 @@ export function useTorrentListState(torrents: Torrent[] | undefined) {
 	const totalActiveFilters =
 		selectedStates.size + selectedCategories.size + selectedTrackers.size;
 
+	// Active filters are always listed, even when no torrent matches them
+	// anymore (e.g. a saved default category), so they can be unchecked.
 	const uniqueCategories = useMemo(() => {
 		const cats = new Set<string>(torrents?.map((t) => t.category) || []);
+		selectedCategories.forEach((c) => cats.add(c));
 		return Array.from(cats).sort();
-	}, [torrents]);
+	}, [torrents, selectedCategories]);
 
 	const uniqueTrackers = useMemo(() => {
-		const trackers = new Set<string>();
+		const trackers = new Set<string>(selectedTrackers);
 		torrents?.forEach((t) => {
 			const host = getTrackerHost(t.tracker);
 			if (host) trackers.add(host);
 		});
 		return Array.from(trackers).sort();
-	}, [torrents]);
+	}, [torrents, selectedTrackers]);
+
+	const currentListSettings: TorrentListDefaults = {
+		sortField,
+		sortDirection,
+		states: Array.from(selectedStates),
+		categories: Array.from(selectedCategories),
+		trackers: Array.from(selectedTrackers),
+	};
 
 	const sortedTorrents = useMemo(() => {
 		if (!torrents) return [];
@@ -283,6 +297,7 @@ export function useTorrentListState(torrents: Torrent[] | undefined) {
 		totalActiveFilters,
 		uniqueCategories,
 		uniqueTrackers,
+		currentListSettings,
 		sortedTorrents,
 		paginatedTorrents,
 		totalPages,

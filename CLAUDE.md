@@ -44,7 +44,8 @@ contexts/StorageContext  Unique point d'accès à localStorage (user, pass, pré
 hooks/useStoragePreferences.ts  Façade simplifiée de StorageContext (sizeUnit, colonnes, titre onglet)
 hooks/useSettingsPreferences.ts Chargement/sauvegarde des préférences qBittorrent par section
 hooks/useTorrentListState.ts    Sélection, recherche, filtres (état/catégorie/tracker), tri, pagination
-                                de la liste de torrents (utilisé par TorrentsView)
+                                de la liste de torrents (utilisé par TorrentsView). L'état initial
+                                (tri + filtres) vient des « defaults » sauvegardés (TorrentListDefaults)
 helpers/index.ts         formatSize, formatTime, formatDate, labels/couleurs d'état & tracker, couleur de tag
 constants/index.ts       defaultPreferences (dont colonnes par défaut), columnsDictionary, locales qBittorrent
 types/index.ts           Types API (Torrent, TorrentFile, TorrentTracker, Peers, RSS, Search, Log, Preferences…)
@@ -61,7 +62,8 @@ components/
   rss/RSSView.tsx, logs/LogsView.tsx
   settings/              SettingsView = Tabs (General, Queueing, Speed, Connection, About)
                          GeneralTab regroupe GeneralSettingsTab + TableViewSettingsCard
-                         + AppearanceSettingsCard + DefaultWebUICard (revenir à l'UI officielle)
+                         + TorrentListDefaultsCard (tri/filtres par défaut) + AppearanceSettingsCard
+                         + DefaultWebUICard (revenir à l'UI officielle)
   ui/                    Composants shadcn (style new-york) — générés, éviter de les modifier à la main
 ```
 
@@ -72,7 +74,8 @@ Alias d'import : `@/` → `src/`.
 - **Auth** : `POST /api/v2/auth/login` ; le navigateur gère le cookie `SID` (même origine). Le code tente aussi de lire `set-cookie`/poser un header `Cookie`, ce qui est ignoré par les navigateurs — sans conséquence. 401/403 → `Error("Authentication required")`.
 - **Identifiants en clair dans localStorage** (`qbit_user`, `qbit_pass`) pour l'auto-login. Lus de façon synchrone au premier rendu pour éviter un flash de la page de login.
 - **localStorage** : toujours passer par `StorageContext` / `useStoragePreferences`. Seule exception : `VersionCheckDialog` (clé `qbitiny_dismissed_version`). Ajouter une clé = la déclarer dans `types/storage.ts`, `STORAGE_KEYS` et le contexte.
-- **Préférences UI vs serveur** : `columns` et `sizeUnit` sont locales (localStorage) ; le reste de `Preferences` vient de `/api/v2/app/preferences`. `useSettingsPreferences.handleSave(section)` n'envoie que les champs de la section (`general`, `queueing`, `speed`, `connection`).
+- **Tri/filtres par défaut** : clé `qbitiny_torrentListDefaults` (`{ sortField, sortDirection, states, categories, trackers }`, défaut dans `constants.defaultTorrentListDefaults`). Modifiables dans Settings → General ou via « Save sort & filters as default » dans le menu Filters de la liste. Appliqués à chaque montage de `TorrentsView` (changer d'onglet réinitialise donc l'état courant).
+- **Préférences UI vs serveur** : `columns`, `sizeUnit` et les tri/filtres par défaut sont locaux (localStorage) ; le reste de `Preferences` vient de `/api/v2/app/preferences`. `useSettingsPreferences.handleSave(section)` n'envoie que les champs de la section (`general`, `queueing`, `speed`, `connection`).
 - **Limites de vitesse** : l'API est en octets/s, l'UI en KiB/s → conversion ×/÷ 1024 au chargement et à la sauvegarde.
 - **États de torrent** : qBittorrent ≥ 5 utilise `stoppedDL/stoppedUP` (start/stop) ; les anciens `pausedDL/pausedUP` sont aussi gérés. Les endpoints utilisés sont `torrents/stop` et `torrents/start` (API v5) même si les méthodes s'appellent `pauseTorrents`/`resumeTorrents`.
 - **Polling React Query** : torrents/trackers/peers/logs 5 s, transfer info 3 s (en arrière-plan seulement si le titre d'onglet dynamique est activé). `staleTime` 5 s, `retry` 1.
@@ -84,7 +87,7 @@ Alias d'import : `@/` → `src/`.
 
 - `TorrentsView.tsx` et `TorrentDetailDialog.tsx` sont très gros ; candidats au découpage.
 - Type `Tab` dupliqué dans `App.tsx` et `Layout.tsx`.
-- `VersionCheckDialog` : état `isLoading` inutilisé (seule erreur de `npm run lint` connue).
+- `npm run lint` remonte ~28 erreurs préexistantes (params `_x` inutilisés dans `demoClient`, `react-refresh/only-export-components` sur les contextes et composants shadcn, imports inutilisés…). Vérifier qu'une modif n'en ajoute pas, plutôt que viser 0.
 - Indentation mixte (tabs majoritaires, quelques fichiers en 2 espaces / quotes simples comme `RSSView`, `LogsView`, `main.tsx`). Suivre le style du fichier modifié.
 
 ## Conventions de travail
