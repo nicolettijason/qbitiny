@@ -24,6 +24,9 @@ import {
 	Zap,
 } from "lucide-react";
 import { useState } from "react";
+// Country flags of the peers list; this dialog is lazy-loaded, so the large
+// flag stylesheet is only fetched when it is first opened.
+import "flag-icons/css/flag-icons.min.css";
 
 import { Button } from "@/components/ui/button";
 import { useStoragePreferences } from "@/hooks/useStoragePreferences";
