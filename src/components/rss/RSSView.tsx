@@ -12,8 +12,10 @@ import {
 } from '@/components/ui/dialog'
 import { useRSSFeeds, useRSSItems, useAddRSSFeed, useRemoveRSSFeed } from '@/hooks/useApi'
 import { toast } from '@/hooks/use-toast'
+import { useTranslation } from "@/i18n";
 
 export function RSSView() {
+  const { t } = useTranslation()
   const [selectedFeed, setSelectedFeed] = useState<string | null>(null)
   const [newFeedUrl, setNewFeedUrl] = useState('')
   
@@ -32,9 +34,9 @@ export function RSSView() {
     try {
       await addFeed.mutateAsync(newFeedUrl)
       setNewFeedUrl('')
-      toast.success('Feed added')
+      toast.success(t("rss.feedAdded"))
     } catch {
-      toast.error('Failed to add feed')
+      toast.error(t("rss.addFailed"))
     }
   }
 
@@ -44,14 +46,14 @@ export function RSSView() {
       if (selectedFeed === uid) {
         setSelectedFeed(null)
       }
-      toast('Feed removed')
+      toast(t("rss.feedRemoved"))
     } catch {
-      toast.error('Failed to remove feed')
+      toast.error(t("rss.removeFailed"))
     }
   }
 
   if (feedsLoading) {
-    return <div className="text-center py-8 text-muted-foreground">Loading feeds...</div>
+    return <div className="text-center py-8 text-muted-foreground">{t("rss.loadingFeeds")}</div>
   }
 
   return (
@@ -59,7 +61,7 @@ export function RSSView() {
       {/* Feeds sidebar */}
       <div className="w-full md:w-64 space-y-2">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Feeds</h2>
+          <h2 className="text-lg font-semibold">{t("rss.feeds")}</h2>
           <Dialog>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline">
@@ -68,17 +70,17 @@ export function RSSView() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add RSS Feed</DialogTitle>
+                <DialogTitle>{t("rss.addTitle")}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleAddFeed} className="space-y-4">
                 <Input
-                  placeholder="Feed URL"
+                  placeholder={t("rss.feedUrl")}
                   value={newFeedUrl}
                   onChange={(e) => setNewFeedUrl(e.target.value)}
                   required
                 />
                 <Button type="submit" className="w-full" disabled={addFeed.isPending}>
-                  Add Feed
+                  {t("rss.addFeed")}
                 </Button>
               </form>
             </DialogContent>
@@ -88,28 +90,28 @@ export function RSSView() {
         {feeds.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
             <Rss className="h-10 w-10 text-muted-foreground/40" />
-            <p className="text-sm font-medium text-muted-foreground">No RSS feeds yet</p>
-            <p className="text-xs text-muted-foreground/70">Add a feed to start following content</p>
+            <p className="text-sm font-medium text-muted-foreground">{t("rss.noFeeds")}</p>
+            <p className="text-xs text-muted-foreground/70">{t("rss.noFeedsHint")}</p>
             <Dialog>
               <DialogTrigger asChild>
                 <Button size="sm" variant="default" className="gap-2 mt-1">
                   <Plus className="h-4 w-4" />
-                  Add your first feed
+                  {t("rss.addFirst")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add RSS Feed</DialogTitle>
+                  <DialogTitle>{t("rss.addTitle")}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleAddFeed} className="space-y-4">
                   <Input
-                    placeholder="Feed URL"
+                    placeholder={t("rss.feedUrl")}
                     value={newFeedUrl}
                     onChange={(e) => setNewFeedUrl(e.target.value)}
                     required
                   />
                   <Button type="submit" className="w-full" disabled={addFeed.isPending}>
-                    Add Feed
+                    {t("rss.addFeed")}
                   </Button>
                 </form>
               </DialogContent>
@@ -155,9 +157,9 @@ export function RSSView() {
       <div className="flex-1">
         {selectedFeed ? (
           itemsLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading articles...</div>
+            <div className="text-center py-8 text-muted-foreground">{t("rss.loadingArticles")}</div>
           ) : items.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No articles</div>
+            <div className="text-center py-8 text-muted-foreground">{t("rss.noArticles")}</div>
           ) : (
             <div className="space-y-2">
               {items.map((item) => (
@@ -199,7 +201,7 @@ export function RSSView() {
           )
         ) : (
           <div className="text-center py-8 text-muted-foreground">
-            Select a feed to view articles
+            {t("rss.selectFeed")}
           </div>
         )}
       </div>

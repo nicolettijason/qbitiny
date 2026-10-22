@@ -9,6 +9,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Preferences } from "@/types";
+import { useTranslation } from "@/i18n";
 
 interface SpeedSettingsTabProps {
 	preferences: Preferences;
@@ -26,17 +27,18 @@ export function SpeedSettingsTab({
 	onUpdatePreference,
 	onSave,
 }: SpeedSettingsTabProps) {
+	const { t } = useTranslation();
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Speed Settings</CardTitle>
+				<CardTitle>{t("settings.speed.title")}</CardTitle>
 				<CardDescription>
-					Configure speed limits (KiB/s, 0 = unlimited)
+					{t("settings.speed.description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="space-y-2">
-					<Label htmlFor="dl_limit">Download Limit</Label>
+					<Label htmlFor="dl_limit">{t("settings.speed.dlLimit")}</Label>
 					<Input
 						id="dl_limit"
 						type="number"
@@ -47,7 +49,7 @@ export function SpeedSettingsTab({
 					/>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="up_limit">Upload Limit</Label>
+					<Label htmlFor="up_limit">{t("settings.speed.upLimit")}</Label>
 					<Input
 						id="up_limit"
 						type="number"
@@ -58,7 +60,7 @@ export function SpeedSettingsTab({
 					/>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="alt_dl_limit">Alternative Download Limit</Label>
+					<Label htmlFor="alt_dl_limit">{t("settings.speed.altDlLimit")}</Label>
 					<Input
 						id="alt_dl_limit"
 						type="number"
@@ -72,7 +74,7 @@ export function SpeedSettingsTab({
 					/>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="alt_up_limit">Alternative Upload Limit</Label>
+					<Label htmlFor="alt_up_limit">{t("settings.speed.altUpLimit")}</Label>
 					<Input
 						id="alt_up_limit"
 						type="number"
@@ -86,7 +88,7 @@ export function SpeedSettingsTab({
 					/>
 				</div>
 				<Button onClick={onSave} disabled={saving}>
-					Save Speed Settings
+					{t("settings.speed.save")}
 				</Button>
 			</CardContent>
 		</Card>

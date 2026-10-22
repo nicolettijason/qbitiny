@@ -12,6 +12,7 @@ import {
 	DialogFooter,
 } from "@/components/ui/dialog";
 import { getLatestRelease, compareVersions } from "@/lib/github";
+import { useTranslation } from "@/i18n";
 
 interface VersionCheckDialogProps {
 	currentVersion: string;
@@ -20,6 +21,7 @@ interface VersionCheckDialogProps {
 const DISMISSED_VERSION_KEY = "qbitiny_dismissed_version";
 
 export function VersionCheckDialog({ currentVersion }: VersionCheckDialogProps) {
+	const { t } = useTranslation();
 	const [isOpen, setIsOpen] = useState(false);
 	const [latestVersion, setLatestVersion] = useState<string | null>(null);
 	const [zipUrl, setZipUrl] = useState<string | null>(null);
@@ -68,21 +70,20 @@ export function VersionCheckDialog({ currentVersion }: VersionCheckDialogProps) 
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<Download className="h-5 w-5" />
-						New version available
+						{t("version.title")}
 					</DialogTitle>
 					<DialogDescription>
-						A new version of qBitiny is available. Please update to get the
-						latest features and bug fixes.
+						{t("version.description")}
 					</DialogDescription>
 				</DialogHeader>
 
 				<div className="space-y-2 rounded-lg bg-muted p-3">
 					<div className="text-sm">
-						<span className="font-medium">Current version:</span>{" "}
+						<span className="font-medium">{t("version.current")}</span>{" "}
 						<span className="text-muted-foreground">{currentVersion}</span>
 					</div>
 					<div className="text-sm">
-						<span className="font-medium">Latest version:</span>{" "}
+						<span className="font-medium">{t("version.latest")}</span>{" "}
 						<span className="text-primary font-semibold">{latestVersion}</span>
 					</div>
 				</div>
@@ -97,7 +98,7 @@ export function VersionCheckDialog({ currentVersion }: VersionCheckDialogProps) 
 						htmlFor="dont-show-again"
 						className="text-sm font-normal cursor-pointer"
 					>
-						Don't show again for this version
+						{t("version.dontShowAgain")}
 					</Label>
 				</div>
 
@@ -108,11 +109,11 @@ export function VersionCheckDialog({ currentVersion }: VersionCheckDialogProps) 
 						className="gap-2"
 					>
 						<X className="h-4 w-4" />
-						Later
+						{t("version.later")}
 					</Button>
 					<Button onClick={handleDownload} className="gap-2">
 						<Download className="h-4 w-4" />
-						Download
+						{t("common.download")}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Preferences } from "@/types";
+import { useTranslation } from "@/i18n";
 
 interface QueueingSettingsTabProps {
 	preferences: Preferences;
@@ -27,11 +28,12 @@ export function QueueingSettingsTab({
 	onUpdatePreference,
 	onSave,
 }: QueueingSettingsTabProps) {
+	const { t } = useTranslation();
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Queueing Settings</CardTitle>
-				<CardDescription>Configure download queue limits</CardDescription>
+				<CardTitle>{t("settings.queueing.title")}</CardTitle>
+				<CardDescription>{t("settings.queueing.description")}</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="flex items-center space-x-2">
@@ -42,11 +44,11 @@ export function QueueingSettingsTab({
 							onUpdatePreference("queueing_enabled", !!checked)
 						}
 					/>
-					<Label htmlFor="queueing_enabled">Enable queueing</Label>
+					<Label htmlFor="queueing_enabled">{t("settings.queueing.enable")}</Label>
 				</div>
 				<div className="space-y-2">
 					<Label htmlFor="max_active_downloads">
-						Max Active Downloads
+						{t("settings.queueing.maxDownloads")}
 					</Label>
 					<Input
 						id="max_active_downloads"
@@ -61,7 +63,7 @@ export function QueueingSettingsTab({
 					/>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="max_active_torrents">Max Active Torrents</Label>
+					<Label htmlFor="max_active_torrents">{t("settings.queueing.maxTorrents")}</Label>
 					<Input
 						id="max_active_torrents"
 						type="number"
@@ -75,7 +77,7 @@ export function QueueingSettingsTab({
 					/>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="max_active_uploads">Max Active Uploads</Label>
+					<Label htmlFor="max_active_uploads">{t("settings.queueing.maxUploads")}</Label>
 					<Input
 						id="max_active_uploads"
 						type="number"
@@ -89,7 +91,7 @@ export function QueueingSettingsTab({
 					/>
 				</div>
 				<Button onClick={onSave} disabled={saving}>
-					Save Queueing Settings
+					{t("settings.queueing.save")}
 				</Button>
 			</CardContent>
 		</Card>

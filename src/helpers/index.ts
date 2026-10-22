@@ -1,4 +1,5 @@
 import { defaultPreferences } from "@/constants";
+import type { TFunction, TranslationKey } from "@/i18n";
 
 /**
  * Get stored table view settings (columns configuration)
@@ -39,10 +40,13 @@ export function formatTime(seconds: number): string {
 	return `${Math.floor(seconds / 86400)}d`;
 }
 
-export function formatNextAnnounce(timestampSeconds: number): string {
+export function formatNextAnnounce(
+	timestampSeconds: number,
+	t: TFunction,
+): string {
 	if (!timestampSeconds) return "—";
 	const diff = timestampSeconds - Math.floor(Date.now() / 1000);
-	if (diff <= 0) return "Now";
+	if (diff <= 0) return t("detail.now");
 	return formatTime(diff);
 }
 
@@ -85,48 +89,49 @@ export function getStateColor(state: string, completedOn: number): string {
 	return "text-muted-foreground";
 }
 
-export function getStateLabel(state: string, completedOn: number) {
-	if (isStoppedState(state) && completedOn > 0) return "Completed";
+const STATE_LABEL_KEYS: Record<string, TranslationKey> = {
+	downloading: "state.downloading",
+	pausedDL: "state.paused",
+	pausedUP: "state.paused",
+	stoppedDL: "state.stopped",
+	stoppedUP: "state.stopped",
+	uploading: "state.seeding",
+	completed: "state.completed",
+	seeding: "state.seeding",
+	stalledDL: "state.stalled",
+	stalledUP: "state.stalled",
+	checkingUP: "state.checking",
+	checkingDL: "state.checking",
+	error: "state.error",
+	forcedDL: "state.forcedDownloading",
+	forcedUP: "state.forcedSeeding",
+	forcedMetaDL: "state.metaDL",
+	metaDL: "state.metaDL",
+	allocating: "state.allocating",
+	checkingResumeData: "state.checking",
+	moving: "state.moving",
+	missingFiles: "state.missingFiles",
+	queuedDL: "state.queued",
+	queuedUP: "state.queued",
+};
 
-	const labels: Record<string, string> = {
-		downloading: "Downloading",
-		pausedDL: "Paused",
-		pausedUP: "Paused",
-		stoppedDL: "Stopped",
-		stoppedUP: "Stopped",
-		uploading: "Seeding",
-		completed: "Completed",
-		seeding: "Seeding",
-		stalledDL: "Stalled",
-		stalledUP: "Stalled",
-		checkingUP: "Checking",
-		checkingDL: "Checking",
-		error: "Error",
-		forcedDL: "[F] Downloading",
-		forcedUP: "[F] Seeding",
-		forcedMetaDL: "Meta DL",
-		metaDL: "Meta DL",
-		allocating: "Allocating",
-		checkingResumeData: "Checking",
-		moving: "Moving",
-		missingFiles: "Missing Files",
-		queuedDL: "Queued",
-		queuedUP: "Queued",
-	};
-
-	return labels[state] || state;
+export function getStateLabel(state: string, completedOn: number, t: TFunction) {
+	if (isStoppedState(state) && completedOn > 0) return t("state.completed");
+	const key = STATE_LABEL_KEYS[state];
+	return key ? t(key) : state;
 }
 
-export function getTrackerStatusLabel(status: number): string {
-	const labels: Record<number, string> = {
-		0: "Disabled",
-		1: "Not contacted",
-		2: "Working",
-		3: "Updating",
-		4: "Not working",
-		5: "Tracker error",
-	};
-	return labels[status] ?? "Unknown";
+const TRACKER_STATUS_KEYS: Record<number, TranslationKey> = {
+	0: "trackerStatus.disabled",
+	1: "trackerStatus.notContacted",
+	2: "trackerStatus.working",
+	3: "trackerStatus.updating",
+	4: "trackerStatus.notWorking",
+	5: "trackerStatus.error",
+};
+
+export function getTrackerStatusLabel(status: number, t: TFunction): string {
+	return t(TRACKER_STATUS_KEYS[status] ?? "trackerStatus.unknown");
 }
 
 export function getTrackerStatusColor(status: number): string {

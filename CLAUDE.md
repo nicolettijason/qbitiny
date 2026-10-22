@@ -24,7 +24,7 @@ npm run demo:build
 
 - Sortie dans `release/qbitiny/public/`, **ignorée par git** (depuis 1.4.0) : les utilisateurs installent le zip des releases GitHub et pointent le Web UI alternatif de qBittorrent vers le dossier `qbitiny` extrait.
 - `base: "./"` → chemins relatifs, nécessaire pour être servi par qBittorrent.
-- Bundle initial ~450 kB JS / ~75 kB CSS grâce au lazy-loading (voir Architecture) : garder les nouvelles vues/dialogs lourds en `React.lazy`.
+- Bundle initial ~480 kB JS (dont ~30 kB de dictionnaires i18n) / ~75 kB CSS grâce au lazy-loading (voir Architecture) : garder les nouvelles vues/dialogs lourds en `React.lazy`.
 - Plugin Vite maison `stripUnusedFlagVariant` : retire les drapeaux carrés (`.fis`) de `flag-icons` pour diviser par 2 les SVG embarqués.
 - `VITE_APP_VERSION` est injecté depuis `package.json` (`define`). Pour publier : bumper la version dans `package.json` (`npm version X.Y.Z --no-git-tag-version`, via une PR), puis, une fois fusionné, `git tag vX.Y.Z && git push origin vX.Y.Z`. Le workflow `.github/workflows/release.yml` vérifie que le tag = version du `package.json`, build, zippe `release/qbitiny` en `qbitiny-vX.Y.Z.zip` et crée la release (ou ajoute le zip si elle existe déjà). Le vérificateur de MAJ (`lib/github.ts`) pointe vers ce `.zip`.
 - CI (`.github/workflows/ci.yml`) sur chaque PR et push sur `main` : `npm ci` + `npm run build` (bloquant) + `npm run lint` (non bloquant tant que la dette de lint existe).
@@ -85,6 +85,13 @@ Alias d'import : `@/` → `src/`.
   - Le mot de passe reste en mémoire dans le client : sur 401/403 en cours d'utilisation, `request()` refait un login (partagé entre requêtes concurrentes) puis rejoue la requête une fois.
   - `isConfigured()` = « authentifié » ; sert de `enabled` à toutes les queries React Query.
   - **Remember me** (coché par défaut dans `LoginForm`) : seul cas où le mot de passe est stocké, **en clair** dans `qbit_pass` (localStorage). Décoché ou logout → clé supprimée. Choix assumé : app destinée à un serveur, il ne faut pas devoir se reconnecter souvent.
+- **Traductions (i18n maison, sans dépendance)** : `src/i18n/`.
+  - `en.ts` est le dictionnaire source (`TranslationKey = keyof typeof en`, clés plates `zone.element`, triées) ; `fr.ts` est typé `Record<TranslationKey, string>` → une traduction manquante casse le build. Toute nouvelle chaîne visible = une clé dans **les deux** fichiers.
+  - Dans un composant : `const { t, tp } = useTranslation()` ; `t("clé", { param })` interpole `{param}` ; `tp("base", count)` choisit `base.one` / `base.other` (règle FR : 0 et 1 au singulier).
+  - Hors composant (helpers comme `getStateLabel`, `getTrackerStatusLabel`, `getStateFilterLabel`, `formatNextAnnounce`) : passer `t` en paramètre — ne pas appeler le hook.
+  - Libellés de colonnes : `t(\`columns.${field}\`)` (`columnsDictionary` ne sert plus qu'à lister les colonnes).
+  - Langue : préférence `auto | en | fr` (clé `qbitiny_language`, Settings → General → Appearance) ; `auto` = langue du navigateur. `I18nProvider` (dans `App.tsx`, sous `StorageProvider`) met aussi à jour `<html lang>`.
+  - Ajouter une langue : un fichier `xx.ts` typé comme `fr.ts`, puis l'ajouter à `Language`, `LANGUAGES` et `dictionaries` dans `i18n/index.ts` (et à `pluralForm` si sa règle de pluriel diffère).
 - **localStorage** : toujours passer par `StorageContext` / `useStoragePreferences`. Seule exception : `VersionCheckDialog` (clé `qbitiny_dismissed_version`). Ajouter une clé = la déclarer dans `types/storage.ts`, `STORAGE_KEYS` et le contexte.
 - **Tri/filtres par défaut** : clé `qbitiny_torrentListDefaults` (`{ sortField, sortDirection, states, categories, trackers }`, défaut dans `constants.defaultTorrentListDefaults`). Modifiables dans Settings → General ou via « Save sort & filters as default » dans le menu Filters de la liste. Appliqués au chargement de la page et réappliqués dès qu'ils sont modifiés.
 - **`TorrentsView` reste monté** (masqué via `hidden`) quand un autre onglet est actif : recherche, filtres, page, sélection et scroll sont conservés, et le polling des torrents continue en arrière-plan.
@@ -108,7 +115,7 @@ Alias d'import : `@/` → `src/`.
 ## Conventions de travail
 
 - Une branche par sujet (`feature/`, `fix/`, `perf/`, `ci/`, `docs/`…) depuis `main`, une PR par branche.
-- `main` est protégée (1 review de code owner requise) : l'auteur ne pouvant pas s'auto-approuver, les PR sont fusionnées avec `gh pr merge <n> --merge --admin` — **uniquement quand l'utilisateur le demande**.
+- `main` est protégée : PR obligatoire (0 approbation requise) et check CI `build` vert. Fusion normale avec `gh pr merge <n> --merge` (plus besoin de `--admin`) — **uniquement quand l'utilisateur le demande**.
 
 ## Environnement (poste Windows de l'utilisateur)
 

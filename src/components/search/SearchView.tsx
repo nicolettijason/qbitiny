@@ -48,6 +48,7 @@ import { useStoragePreferences } from "@/hooks/useStoragePreferences";
 import { qbitClient } from "@/lib/api";
 import type { SearchResult } from "@/types";
 import { formatSize } from "@/helpers";
+import { useTranslation } from "@/i18n";
 
 type SortField =
 	| "fileName"
@@ -63,6 +64,7 @@ const POLL_INTERVAL_MS = 1000;
 const MAX_SEARCH_DURATION_MS = 10 * 60 * 1000;
 
 export function SearchView() {
+	const { t, tp } = useTranslation();
 	const [query, setQuery] = useState("");
 	const [results, setResults] = useState<SearchResult[]>([]);
 	const [isSearching, setIsSearching] = useState(false);
@@ -104,7 +106,7 @@ export function SearchView() {
 			currentSearchIdRef.current = id;
 
 			if (!id) {
-				toast.error("Search not available - no plugins configured");
+				toast.error(t("search.noPlugins"));
 				return;
 			}
 			// Poll until the plugins are done (status leaves "Running"), the
@@ -136,7 +138,7 @@ export function SearchView() {
 		} catch (err) {
 			console.error("Search error:", err);
 			toast.error(
-				"Search not available. Please configure search plugins in qBittorrent.",
+				t("search.unavailable"),
 			);
 		} finally {
 			setIsSearching(false);
@@ -153,13 +155,13 @@ export function SearchView() {
 		if (id != null) {
 			try {
 				await qbitClient.stopSearch(id);
-				toast.info("Search cancelled");
+				toast.info(t("search.cancelled"));
 			} catch (err) {
 				console.warn("Failed to stop search on server", err);
-				toast.error("Failed to cancel search on server");
+				toast.error(t("search.cancelFailed"));
 			}
 		} else {
-			toast.info("Search cancelled");
+			toast.info(t("search.cancelled"));
 		}
 	};
 
@@ -200,11 +202,11 @@ export function SearchView() {
 		setIsDownloading(true);
 		try {
 			await qbitClient.addTorrentUrl(selectedResult.fileUrl);
-			toast.success("Torrent added to download queue");
+			toast.success(t("search.added"));
 			setSelectedResult(null);
 		} catch (err) {
 			console.error("Download error:", err);
-			toast.error("Failed to add torrent");
+			toast.error(t("common.addTorrentFailed"));
 		} finally {
 			setIsDownloading(false);
 		}
@@ -221,24 +223,24 @@ export function SearchView() {
 	};
 
 	const sortLabels: Record<SortField, string> = {
-		fileName: "Name",
-		fileSize: "Size",
-		nbSeeders: "Seeds",
-		nbLeechers: "Leeches",
-		siteUrl: "Source",
+		fileName: t("common.name"),
+		fileSize: t("common.size"),
+		nbSeeders: t("common.seeds"),
+		nbLeechers: t("common.leeches"),
+		siteUrl: t("search.source"),
 	};
 
 	return (
 		<div className="space-y-4">
 			<Card className="gap-2">
 				<CardHeader className="flex justify-between">
-					<CardTitle>Search Torrents</CardTitle>
+					<CardTitle>{t("search.title")}</CardTitle>
 					{/* <CardDescription className='text-xs'>Results {results.length}</CardDescription> */}
 				</CardHeader>
 				<CardContent className="py-2">
 					<form onSubmit={handleSearch} className="flex gap-2">
 						<Input
-							placeholder="Search query..."
+							placeholder={t("search.placeholder")}
 							value={query}
 							onChange={(e) => setQuery(e.target.value)}
 							required
@@ -256,7 +258,7 @@ export function SearchView() {
 								variant="ghost"
 								size="icon"
 								onClick={handleCancelSearch}
-								aria-label="Cancel search"
+								aria-label={t("search.cancel")}
 								className="ml-2"
 							>
 								<X className="h-4 w-4" />
@@ -268,7 +270,7 @@ export function SearchView() {
 
 			{searched && !isSearching && results.length === 0 && (
 				<div className="text-center py-8 text-muted-foreground">
-					No results found
+					{t("search.noResults")}
 				</div>
 			)}
 
@@ -277,39 +279,39 @@ export function SearchView() {
 					{/* Mobile Sort Dropdown */}
 					<div className="md:hidden flex items-center justify-between">
 						<span className="text-sm text-muted-foreground">
-							{sortedResults.length} results
+							{tp("search.results", sortedResults.length)}
 						</span>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<Button variant="outline" size="sm">
 									<ArrowUpDown className="h-4 w-4 mr-2" />
-									Sort: {sortLabels[sortField]}
+									{t("common.sortBy", { field: sortLabels[sortField] })}
 									{sortDirection === "asc" ? " ↑" : " ↓"}
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
 								<DropdownMenuItem onClick={() => handleSort("fileName")}>
-									Name{" "}
+									{t("common.name")}{" "}
 									{sortField === "fileName" &&
 										(sortDirection === "asc" ? "↑" : "↓")}
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => handleSort("fileSize")}>
-									Size{" "}
+									{t("common.size")}{" "}
 									{sortField === "fileSize" &&
 										(sortDirection === "asc" ? "↑" : "↓")}
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => handleSort("nbSeeders")}>
-									Seeds{" "}
+									{t("common.seeds")}{" "}
 									{sortField === "nbSeeders" &&
 										(sortDirection === "asc" ? "↑" : "↓")}
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => handleSort("nbLeechers")}>
-									Leeches{" "}
+									{t("common.leeches")}{" "}
 									{sortField === "nbLeechers" &&
 										(sortDirection === "asc" ? "↑" : "↓")}
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => handleSort("siteUrl")}>
-									Source{" "}
+									{t("search.source")}{" "}
 									{sortField === "siteUrl" &&
 										(sortDirection === "asc" ? "↑" : "↓")}
 								</DropdownMenuItem>
@@ -330,7 +332,7 @@ export function SearchView() {
 														onClick={() => handleSort("fileName")}
 														className="flex items-center hover:text-foreground"
 													>
-														Name <SortIcon field="fileName" />
+														{t("common.name")} <SortIcon field="fileName" />
 													</button>
 												</TableHead>
 												<TableHead>
@@ -338,7 +340,7 @@ export function SearchView() {
 														onClick={() => handleSort("fileSize")}
 														className="flex items-center hover:text-foreground"
 													>
-														Size <SortIcon field="fileSize" />
+														{t("common.size")} <SortIcon field="fileSize" />
 													</button>
 												</TableHead>
 												<TableHead>
@@ -346,7 +348,7 @@ export function SearchView() {
 														onClick={() => handleSort("nbSeeders")}
 														className="flex items-center hover:text-foreground"
 													>
-														Seeds <SortIcon field="nbSeeders" />
+														{t("common.seeds")} <SortIcon field="nbSeeders" />
 													</button>
 												</TableHead>
 												<TableHead>
@@ -354,7 +356,7 @@ export function SearchView() {
 														onClick={() => handleSort("nbLeechers")}
 														className="flex items-center hover:text-foreground"
 													>
-														Leeches <SortIcon field="nbLeechers" />
+														{t("common.leeches")} <SortIcon field="nbLeechers" />
 													</button>
 												</TableHead>
 												<TableHead>
@@ -362,7 +364,7 @@ export function SearchView() {
 														onClick={() => handleSort("siteUrl")}
 														className="flex items-center hover:text-foreground"
 													>
-														Source <SortIcon field="siteUrl" />
+														{t("search.source")} <SortIcon field="siteUrl" />
 													</button>
 												</TableHead>
 												<TableHead className="w-[100px]"></TableHead>
@@ -429,9 +431,11 @@ export function SearchView() {
 								{totalPages > 1 && (
 									<div className="flex items-center justify-between px-4 py-2 border-t">
 										<div className="text-sm text-muted-foreground">
-											Showing {(currentPage - 1) * PAGE_SIZE + 1} to{" "}
-											{Math.min(currentPage * PAGE_SIZE, sortedResults.length)}{" "}
-											of {sortedResults.length} results
+											{t("search.showing", {
+												from: (currentPage - 1) * PAGE_SIZE + 1,
+												to: Math.min(currentPage * PAGE_SIZE, sortedResults.length),
+												total: sortedResults.length,
+											})}
 										</div>
 										<div className="flex items-center gap-2">
 											<Button
@@ -443,7 +447,7 @@ export function SearchView() {
 												<ChevronLeft className="h-4 w-4" />
 											</Button>
 											<span className="text-sm">
-												Page {currentPage} of {totalPages}
+												{t("common.pageOf", { page: currentPage, total: totalPages })}
 											</span>
 											<Button
 												variant="outline"
@@ -476,8 +480,10 @@ export function SearchView() {
 											>
 												<div className="flex items-center justify-between text-[10px]">
 													<span className="text-muted-foreground">
-														{result.nbSeeders} seeds • {result.nbLeechers}{" "}
-														leeches
+														{t("search.seedsLeeches", {
+														seeds: result.nbSeeders,
+														leeches: result.nbLeechers,
+													})}
 													</span>
 												</div>
 												<p className="font-medium text-xs break-words max-w-[240px]">
@@ -494,7 +500,7 @@ export function SearchView() {
 													<div className="mt-1 pt-1 border-t space-y-1 text-[10px]">
 														<div className="flex justify-between">
 															<span className="text-muted-foreground">
-																Size:
+																{t("search.labelSize")}
 															</span>
 															<span>
 																{formatSize(result.fileSize, sizeUnit)}
@@ -502,19 +508,19 @@ export function SearchView() {
 														</div>
 														<div className="flex justify-between">
 															<span className="text-muted-foreground">
-																Seeds:
+																{t("search.labelSeeds")}
 															</span>
 															<span>{result.nbSeeders}</span>
 														</div>
 														<div className="flex justify-between">
 															<span className="text-muted-foreground">
-																Leeches:
+																{t("search.labelLeeches")}
 															</span>
 															<span>{result.nbLeechers}</span>
 														</div>
 														<div className="flex justify-between">
 															<span className="text-muted-foreground">
-																Source:
+																{t("search.labelSource")}
 															</span>
 															<span className="truncate">{result.siteUrl}</span>
 														</div>
@@ -530,7 +536,7 @@ export function SearchView() {
 													setExpandedResult(isExpanded ? null : index);
 												}}
 												aria-expanded={isExpanded}
-												aria-label={isExpanded ? "Collapse" : "Expand"}
+												aria-label={isExpanded ? t("common.collapse") : t("common.expand")}
 											>
 												{isExpanded ? (
 													<ChevronUp className="h-3 w-3" />
@@ -550,7 +556,7 @@ export function SearchView() {
 														e.stopPropagation();
 														setSelectedResult(result);
 													}}
-													aria-label="Download"
+													aria-label={t("common.download")}
 												>
 													<Download className="h-3 w-3" />
 												</Button>
@@ -562,7 +568,7 @@ export function SearchView() {
 													rel="noopener noreferrer"
 													onClick={(e) => e.stopPropagation()}
 													className="flex items-center justify-center w-8 h-8 rounded hover:bg-accent"
-													aria-label="Open details"
+													aria-label={t("search.openDetails")}
 												>
 													<ExternalLink className="h-3 w-3" />
 												</a>
@@ -583,27 +589,32 @@ export function SearchView() {
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Download Torrent</DialogTitle>
+						<DialogTitle>{t("search.downloadTitle")}</DialogTitle>
 						<DialogDescription>
-							Would you like to download this torrent?
+							{t("search.downloadConfirm")}
 						</DialogDescription>
 					</DialogHeader>
 					{selectedResult && (
 						<div className="py-4">
 							<p className="font-medium">{selectedResult.fileName}</p>
 							<div className="text-sm text-muted-foreground mt-2 space-y-1">
-								<p>Size: {formatSize(selectedResult.fileSize, sizeUnit)}</p>
 								<p>
-									Seeds: {selectedResult.nbSeeders} | Leechers:{" "}
-									{selectedResult.nbLeechers}
+									{t("search.labelSize")}{" "}
+									{formatSize(selectedResult.fileSize, sizeUnit)}
 								</p>
-								<p>Source: {selectedResult.siteUrl}</p>
+								<p>
+									{t("search.labelSeeds")} {selectedResult.nbSeeders} |{" "}
+									{t("search.labelLeeches")} {selectedResult.nbLeechers}
+								</p>
+								<p>
+									{t("search.labelSource")} {selectedResult.siteUrl}
+								</p>
 							</div>
 						</div>
 					)}
 					<DialogFooter>
 						<Button variant="outline" onClick={() => setSelectedResult(null)}>
-							Cancel
+							{t("common.cancel")}
 						</Button>
 						<Button onClick={handleDownload} disabled={isDownloading}>
 							{isDownloading ? (
@@ -611,7 +622,7 @@ export function SearchView() {
 							) : (
 								<Download className="h-4 w-4 mr-2" />
 							)}
-							Download
+							{t("common.download")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

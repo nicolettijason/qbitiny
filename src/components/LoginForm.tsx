@@ -6,8 +6,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useStorage } from "@/contexts/StorageContext";
+import { useTranslation } from "@/i18n";
 
 export function LoginForm() {
+	const { t } = useTranslation();
 	const storage = useStorage();
 	const [username, setUsername] = useState(storage.qbitUser);
 	const [password, setPassword] = useState("");
@@ -22,7 +24,11 @@ export function LoginForm() {
 		try {
 			await login(username, password, rememberMe);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Login failed");
+			setError(
+				err instanceof Error && err.message === "invalid_credentials"
+					? t("login.invalidCredentials")
+					: t("login.failed"),
+			);
 		}
 	};
 
@@ -40,7 +46,7 @@ export function LoginForm() {
 				<CardContent>
 					<form onSubmit={handleSubmit} className="space-y-4">
 						<div className="space-y-2">
-							<Label htmlFor="username">Username</Label>
+							<Label htmlFor="username">{t("login.username")}</Label>
 							<Input
 								id="username"
 								type="text"
@@ -50,7 +56,7 @@ export function LoginForm() {
 							/>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="password">Password</Label>
+							<Label htmlFor="password">{t("login.password")}</Label>
 							<Input
 								id="password"
 								type="password"
@@ -66,12 +72,12 @@ export function LoginForm() {
 								onCheckedChange={(checked) => setRememberMe(!!checked)}
 							/>
 							<Label htmlFor="remember_me" className="font-normal">
-								Remember me on this device
+								{t("login.rememberMe")}
 							</Label>
 						</div>
 						{error && <p className="text-sm text-destructive">{error}</p>}
 						<Button type="submit" className="w-full" disabled={isLoading}>
-							{isLoading ? "Connecting..." : "Connect"}
+							{isLoading ? t("login.connecting") : t("login.connect")}
 						</Button>
 					</form>
 				</CardContent>

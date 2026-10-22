@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ExternalLink, RefreshCw, AlertCircle, CheckCircle, Download } from "lucide-react";
 import { getLatestRelease, compareVersions } from "@/lib/github";
+import { useTranslation } from "@/i18n";
 
 const CURRENT_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.0";
 
 export function AboutSettingsTab() {
+	const { t } = useTranslation();
 	const [latestRelease, setLatestRelease] = useState<{
 		tag: string;
 		name: string;
@@ -23,7 +25,7 @@ export function AboutSettingsTab() {
 		const release = await getLatestRelease();
 
 		if (!release) {
-			setError("Failed to check for updates. Please try again later.");
+			setError(t("about.checkFailed"));
 			setChecking(false);
 			return;
 		}
@@ -53,12 +55,12 @@ export function AboutSettingsTab() {
 	return (
 		<div className="space-y-6">
 			<Card className="p-6">
-				<h2 className="text-lg font-semibold mb-4">About qBitiny</h2>
+				<h2 className="text-lg font-semibold mb-4">{t("about.title")}</h2>
 
 				<div className="space-y-4">
 					<div>
 						<p className="text-sm text-muted-foreground mb-1">
-							Current Version
+							{t("about.currentVersion")}
 						</p>
 						<p className="text-2xl font-mono font-bold">{currentVersion}</p>
 					</div>
@@ -72,12 +74,12 @@ export function AboutSettingsTab() {
 							{checking ? (
 								<>
 									<RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-									Checking...
+									{t("about.checking")}
 								</>
 							) : (
 								<>
 									<RefreshCw className="h-4 w-4 mr-2" />
-									Check for Updates
+									{t("about.checkUpdates")}
 								</>
 							)}
 						</Button>
@@ -85,10 +87,10 @@ export function AboutSettingsTab() {
 							<Button
 								onClick={handleDownloadBuild}
 								variant="outline"
-								title="Download the latest build from GitHub releases"
+								title={t("about.downloadTitle")}
 							>
 								<Download className="h-4 w-4 mr-2" />
-								Download Build
+								{t("about.downloadBuild")}
 							</Button>
 						)}
 					</div>
@@ -117,13 +119,13 @@ export function AboutSettingsTab() {
 								<div className="flex-1">
 									<p className="font-semibold mb-1">
 										{isOutdated
-											? "Update Available"
-											: "You're Up to Date"}
+											? t("about.updateAvailable")
+											: t("about.upToDate")}
 									</p>
 									<p className="text-sm mb-3">
 										{isOutdated
-											? `New version ${latestRelease.tag} is available`
-											: `You have the latest version (${latestRelease.tag})`}
+											? t("about.newVersion", { version: latestRelease.tag })
+											: t("about.latest", { version: latestRelease.tag })}
 									</p>
 									{isOutdated && (
 										<a
@@ -132,7 +134,7 @@ export function AboutSettingsTab() {
 											rel="noopener noreferrer"
 											className="inline-flex items-center gap-1 text-sm font-medium text-amber-600 dark:text-amber-400 hover:underline"
 										>
-											View on GitHub
+											{t("common.viewOnGitHub")}
 											<ExternalLink className="h-3 w-3" />
 										</a>
 									)}
@@ -144,10 +146,9 @@ export function AboutSettingsTab() {
 			</Card>
 
 			<Card className="p-6">
-				<h3 className="text-sm font-semibold mb-2">Project Information</h3>
+				<h3 className="text-sm font-semibold mb-2">{t("about.projectInfo")}</h3>
 				<p className="text-sm text-muted-foreground mb-4">
-					qBitiny is a modern web interface for qBittorrent built with
-					React and TypeScript.
+					{t("about.projectDescription")}
 				</p>
 				<a
 					href="https://github.com/nicolettijason/qbitiny"
@@ -155,7 +156,7 @@ export function AboutSettingsTab() {
 					rel="noopener noreferrer"
 					className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
 				>
-					View on GitHub
+					{t("common.viewOnGitHub")}
 					<ExternalLink className="h-4 w-4" />
 				</a>
 			</Card>

@@ -25,6 +25,7 @@ import {
 import { useStoragePreferences } from "@/hooks/useStoragePreferences";
 import { formatSize } from "@/helpers";
 import { useTheme } from "next-themes";
+import { useTranslation } from "@/i18n";
 
 type Tab = "torrents" | "add" | "rss" | "search" | "logs" | "settings";
 
@@ -35,6 +36,7 @@ interface LayoutProps {
 }
 
 export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
+	const { t } = useTranslation();
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const { logout } = useAuth();
 	const { theme, setTheme } = useTheme();
@@ -46,16 +48,16 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 	const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
 		{
 			id: "torrents",
-			label: "Torrents",
+			label: t("nav.torrents"),
 			icon: <Download className="h-5 w-5" />,
 		},
-		{ id: "add", label: "Add", icon: <Server className="h-5 w-5" /> },
-		{ id: "rss", label: "RSS", icon: <Radio className="h-5 w-5" /> },
-		{ id: "search", label: "Search", icon: <Search className="h-5 w-5" /> },
-		{ id: "logs", label: "Logs", icon: <FileText className="h-5 w-5" /> },
+		{ id: "add", label: t("nav.add"), icon: <Server className="h-5 w-5" /> },
+		{ id: "rss", label: t("nav.rss"), icon: <Radio className="h-5 w-5" /> },
+		{ id: "search", label: t("nav.search"), icon: <Search className="h-5 w-5" /> },
+		{ id: "logs", label: t("nav.logs"), icon: <FileText className="h-5 w-5" /> },
 		{
 			id: "settings",
-			label: "Settings",
+			label: t("nav.settings"),
 			icon: <Settings className="h-5 w-5" />,
 		},
 	];
@@ -142,8 +144,8 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 							disabled={toggleAltSpeedLimits.isPending}
 							title={
 								altSpeedLimits
-									? "Alternative speed limits: on"
-									: "Alternative speed limits: off"
+									? t("layout.altSpeedOn")
+									: t("layout.altSpeedOff")
 							}
 							aria-pressed={!!altSpeedLimits}
 						>
@@ -155,7 +157,7 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 							size="icon"
 							className="h-8 w-8 hidden sm:flex"
 							onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-							title="Toggle theme"
+							title={t("layout.toggleTheme")}
 						>
 							{theme === "dark" ? (
 								<Sun className="h-4 w-4" />
@@ -190,24 +192,24 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 								onClick={logout}
 							>
 								<LogOut className="h-5 w-5" />
-								Logout
+								{t("layout.logout")}
 							</Button>
 							<div className="border-t my-2" />
 							<Button
 								variant="ghost"
 								className="justify-start gap-2"
 								onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-								title="Toggle theme"
+								title={t("layout.toggleTheme")}
 							>
 								{theme === "dark" ? (
 									<>
 										<Sun className="h-4 w-4" />
-										<span>dark</span>
+										<span>{t("layout.dark")}</span>
 									</>
 								) : (
 									<>
 										<Moon className="h-4 w-4" />
-										<span>light</span>
+										<span>{t("layout.light")}</span>
 									</>
 								)}
 							</Button>
@@ -238,7 +240,7 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 						onClick={logout}
 					>
 						<LogOut className="h-5 w-5" />
-						Logout
+						{t("layout.logout")}
 					</Button>
 				</aside>
 

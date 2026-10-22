@@ -18,8 +18,10 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { qbitClient } from "@/lib/api";
+import { useTranslation } from "@/i18n";
 
 export function DefaultWebUICard() {
+	const { t } = useTranslation();
 	const [revertDialogOpen, setRevertDialogOpen] = useState(false);
 	const [reverting, setReverting] = useState(false);
 
@@ -29,11 +31,11 @@ export function DefaultWebUICard() {
 			await qbitClient.revertToDefaultWebUI();
 			setRevertDialogOpen(false);
 			toast.success(
-				"Reverted to default Web UI. Reload the page or visit the root URL to access the default interface.",
+				t("webui.reverted"),
 			);
 		} catch (error) {
 			console.error("Failed to revert to default Web UI:", error);
-			toast.error("Failed to revert to default Web UI");
+			toast.error(t("webui.revertFailed"));
 		} finally {
 			setReverting(false);
 		}
@@ -42,9 +44,9 @@ export function DefaultWebUICard() {
 	return (
 		<Card className="mt-3">
 			<CardHeader>
-				<CardTitle>Default Web UI</CardTitle>
+				<CardTitle>{t("webui.title")}</CardTitle>
 				<CardDescription>
-					Disable qbitiny and revert to qBittorrent's built-in Web UI
+					{t("webui.description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -58,16 +60,14 @@ export function DefaultWebUICard() {
 							size="default"
 							className="gap-2"
 						>
-							Revert to Default Web UI
+							{t("webui.revert")}
 						</Button>
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Revert to Default Web UI?</DialogTitle>
+							<DialogTitle>{t("webui.revertConfirm")}</DialogTitle>
 							<DialogDescription>
-								This will disable qbitiny. You will need to re-enable
-								the alternative Web UI in qBittorrent's settings to use
-								qbitiny again.
+								{t("webui.confirmDescription")}
 							</DialogDescription>
 						</DialogHeader>
 						<DialogFooter>
@@ -75,14 +75,14 @@ export function DefaultWebUICard() {
 								variant="outline"
 								onClick={() => setRevertDialogOpen(false)}
 							>
-								Cancel
+								{t("common.cancel")}
 							</Button>
 							<Button
 								variant="destructive"
 								onClick={handleRevert}
 								disabled={reverting}
 							>
-								{reverting ? "Reverting..." : "Confirm"}
+								{reverting ? t("webui.reverting") : t("common.confirm")}
 							</Button>
 						</DialogFooter>
 					</DialogContent>

@@ -30,6 +30,7 @@ import type {
 	SortDirection,
 	TorrentListDefaults,
 } from "@/types";
+import { useTranslation } from "@/i18n";
 
 function toggleItem<T>(list: T[], value: T): T[] {
 	return list.includes(value)
@@ -72,6 +73,7 @@ function CheckboxList<T extends string>({
 }
 
 export function TorrentListDefaultsCard() {
+	const { t } = useTranslation();
 	const { torrentListDefaults, setTorrentListDefaults } =
 		useStoragePreferences();
 	const { data: torrents } = useTorrents();
@@ -100,29 +102,27 @@ export function TorrentListDefaultsCard() {
 
 	const handleSave = () => {
 		setTorrentListDefaults(draft);
-		toast.success("Default sort & filters saved");
+		toast.success(t("defaults.saved"));
 	};
 
 	const handleReset = () => {
 		setDraft(defaultTorrentListDefaults);
 		setTorrentListDefaults(defaultTorrentListDefaults);
-		toast.success("Default sort & filters reset");
+		toast.success(t("defaults.resetDone"));
 	};
 
 	return (
 		<Card className="mt-3">
 			<CardHeader>
-				<CardTitle>Default Sort & Filters</CardTitle>
+				<CardTitle>{t("defaults.title")}</CardTitle>
 				<CardDescription>
-					Sort and filters applied to the torrent list when it opens. You can
-					also save the current ones from the Filters menu of the torrent
-					list.
+					{t("defaults.description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="flex flex-wrap gap-4">
 					<div className="space-y-2 flex-1 min-w-48">
-						<Label>Sort by</Label>
+						<Label>{t("defaults.sortBy")}</Label>
 						<Select
 							value={draft.sortField}
 							onValueChange={(value) => update("sortField", value as Columns)}
@@ -133,14 +133,14 @@ export function TorrentListDefaultsCard() {
 							<SelectContent>
 								{(Object.keys(columnsDictionary) as Columns[]).map((field) => (
 									<SelectItem key={field} value={field}>
-										{columnsDictionary[field]}
+										{t(`columns.${field}`)}
 									</SelectItem>
 								))}
 							</SelectContent>
 						</Select>
 					</div>
 					<div className="space-y-2 w-40">
-						<Label>Direction</Label>
+						<Label>{t("defaults.direction")}</Label>
 						<Select
 							value={draft.sortDirection}
 							onValueChange={(value) =>
@@ -151,20 +151,20 @@ export function TorrentListDefaultsCard() {
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="asc">Ascending ↑</SelectItem>
-								<SelectItem value="desc">Descending ↓</SelectItem>
+								<SelectItem value="asc">{t("defaults.ascending")}</SelectItem>
+								<SelectItem value="desc">{t("defaults.descending")}</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>
 				</div>
 
 				<div className="space-y-2">
-					<Label>State</Label>
+					<Label>{t("filters.state")}</Label>
 					<CheckboxList
 						idPrefix="default-state"
 						items={STATE_FILTERS}
 						checked={draft.states}
-						getLabel={getStateFilterLabel}
+						getLabel={(state) => getStateFilterLabel(state, t)}
 						onToggle={(state) =>
 							update("states", toggleItem(draft.states, state))
 						}
@@ -173,12 +173,12 @@ export function TorrentListDefaultsCard() {
 
 				{categories.length > 0 && (
 					<div className="space-y-2">
-						<Label>Categories</Label>
+						<Label>{t("filters.categories")}</Label>
 						<CheckboxList
 							idPrefix="default-category"
 							items={categories}
 							checked={draft.categories}
-							getLabel={(category) => category || "No category"}
+							getLabel={(category) => category || t("filters.noCategory")}
 							onToggle={(category) =>
 								update("categories", toggleItem(draft.categories, category))
 							}
@@ -188,7 +188,7 @@ export function TorrentListDefaultsCard() {
 
 				{trackers.length > 0 && (
 					<div className="space-y-2">
-						<Label>Trackers</Label>
+						<Label>{t("filters.trackers")}</Label>
 						<CheckboxList
 							idPrefix="default-tracker"
 							items={trackers}
@@ -202,15 +202,14 @@ export function TorrentListDefaultsCard() {
 				)}
 
 				<p className="text-xs text-muted-foreground">
-					Filters of different kinds are combined (state AND category AND
-					tracker); within a kind, any checked value matches.
+					{t("defaults.hint")}
 				</p>
 
 				<div className="flex items-center gap-2">
 					<Button variant="outline" onClick={handleReset}>
-						Reset to default
+						{t("common.resetToDefault")}
 					</Button>
-					<Button onClick={handleSave}>Save</Button>
+					<Button onClick={handleSave}>{t("common.save")}</Button>
 				</div>
 			</CardContent>
 		</Card>

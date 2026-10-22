@@ -20,9 +20,10 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Columns, Preferences } from "@/types";
-import { columnsDictionary, defaultPreferences } from "@/constants";
+import { defaultPreferences } from "@/constants";
 import { toast } from "sonner";
 import { useStoragePreferences } from "@/hooks/useStoragePreferences";
+import { useTranslation } from "@/i18n";
 
 interface TableViewSettingsCardProps {
 	preferences: Preferences;
@@ -36,6 +37,7 @@ export function TableViewSettingsCard({
 	preferences,
 	onUpdatePreference,
 }: TableViewSettingsCardProps) {
+	const { t } = useTranslation();
 	const { setTableViewSettings } = useStoragePreferences();
 	const [draggedColumn, setDraggedColumn] = useState<
 		keyof typeof defaultPreferences.columns | null
@@ -99,10 +101,10 @@ export function TableViewSettingsCard({
 	const handleSaveTableSettings = () => {
 		try {
 			setTableViewSettings(preferences.columns);
-			toast.success("Table view settings saved");
+			toast.success(t("tableView.saved"));
 		} catch (error) {
 			console.error("Failed to save table view settings:", error);
-			toast.error("Failed to save table view settings");
+			toast.error(t("tableView.saveFailed"));
 		}
 	};
 
@@ -110,7 +112,7 @@ export function TableViewSettingsCard({
 		const defaultColumns = defaultPreferences.columns;
 		onUpdatePreference("columns", defaultColumns);
 		setTableViewSettings(defaultColumns);
-		toast.success("Table view settings reset to default");
+		toast.success(t("tableView.resetDone"));
 	};
 
 	const orderedColumns: typeof preferences.columns = useMemo(
@@ -130,15 +132,14 @@ export function TableViewSettingsCard({
 	return (
 		<Card className="mt-3">
 			<CardHeader>
-				<CardTitle>Table View Settings</CardTitle>
+				<CardTitle>{t("tableView.title")}</CardTitle>
 				<CardDescription>
-					Configure which columns are displayed in the torrent list. Drag
-					to reorder columns.
+					{t("tableView.description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="space-y-2">
-					<Label>Columns</Label>
+					<Label>{t("tableView.columns")}</Label>
 					<div className="flex flex-col space-y-2 border rounded-lg p-4 bg-muted/30">
 						{Object.entries(orderedColumns).map(([column, config]) => (
 							<div
@@ -176,7 +177,7 @@ export function TableViewSettingsCard({
 									}
 								/>
 								<Label htmlFor={column} className="flex-1 cursor-pointer">
-									{columnsDictionary[column as Columns] || column}
+									{t(`columns.${column as Columns}`)}
 								</Label>
 							</div>
 						))}
@@ -188,14 +189,13 @@ export function TableViewSettingsCard({
 						onOpenChange={setResetColumnsDialogOpen}
 					>
 						<DialogTrigger asChild>
-							<Button variant="destructive">Reset to default</Button>
+							<Button variant="destructive">{t("common.resetToDefault")}</Button>
 						</DialogTrigger>
 						<DialogContent>
 							<DialogHeader>
-								<DialogTitle>Reset column settings?</DialogTitle>
+								<DialogTitle>{t("tableView.resetTitle")}</DialogTitle>
 								<DialogDescription>
-									This will restore the default columns order and
-									visibility. Your current configuration will be lost.
+									{t("tableView.resetDescription")}
 								</DialogDescription>
 							</DialogHeader>
 							<DialogFooter>
@@ -203,7 +203,7 @@ export function TableViewSettingsCard({
 									variant="outline"
 									onClick={() => setResetColumnsDialogOpen(false)}
 								>
-									Cancel
+									{t("common.cancel")}
 								</Button>
 								<Button
 									variant="destructive"
@@ -212,12 +212,12 @@ export function TableViewSettingsCard({
 										setResetColumnsDialogOpen(false);
 									}}
 								>
-									Reset
+									{t("common.reset")}
 								</Button>
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>
-					<Button onClick={() => handleSaveTableSettings()}>Save</Button>
+					<Button onClick={() => handleSaveTableSettings()}>{t("common.save")}</Button>
 				</div>
 			</CardContent>
 		</Card>
