@@ -70,8 +70,12 @@ function AppContent() {
 		<>
 			<VersionCheckDialog currentVersion={appVersion} />
 			<Layout activeTab={activeTab} onTabChange={setActiveTab}>
+				{/* Kept mounted (only hidden) so search, filters, page and selection
+				    survive tab switches. */}
+				<div hidden={activeTab !== "torrents"}>
+					<TorrentsView />
+				</div>
 				<Suspense fallback={viewFallback}>
-					{activeTab === "torrents" && <TorrentsView />}
 					{activeTab === "add" && <AddTorrentView />}
 					{activeTab === "rss" && <RSSView />}
 					{activeTab === "search" && <SearchView />}
