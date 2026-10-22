@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
 	Search as SearchIcon,
 	Loader2,
@@ -18,8 +18,6 @@ import { Input } from "@/components/ui/input";
 import {
 	Card,
 	CardContent,
-	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
@@ -60,6 +58,9 @@ type SortField =
 type SortDirection = "asc" | "desc";
 
 const PAGE_SIZE = 20;
+const POLL_INTERVAL_MS = 1000;
+// Safety net in case the server never reports the end of the search.
+const MAX_SEARCH_DURATION_MS = 10 * 60 * 1000;
 
 export function SearchView() {
 	const [query, setQuery] = useState("");
@@ -74,15 +75,23 @@ export function SearchView() {
 	);
 	const [isDownloading, setIsDownloading] = useState(false);
 	const [expandedResult, setExpandedResult] = useState<number | null>(null);
-	const [cancelSearch, setCancelSearch] = useState(false);
 	const cancelSearchRef = useRef(false);
 	const currentSearchIdRef = useRef<number | null>(null);
 	const { sizeUnit } = useStoragePreferences();
 
+	// Leaving the view stops the polling loop and the search on the server.
+	useEffect(
+		() => () => {
+			cancelSearchRef.current = true;
+			const id = currentSearchIdRef.current;
+			if (id != null) qbitClient.stopSearch(id).catch(() => {});
+		},
+		[],
+	);
+
 	const handleSearch = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!query.trim()) return;
-		setCancelSearch(false);
 		cancelSearchRef.current = false;
 		setIsSearching(true);
 		setSearched(true);
@@ -98,9 +107,15 @@ export function SearchView() {
 				toast.error("Search not available - no plugins configured");
 				return;
 			}
-			let attempts = 0;
-			while (attempts < 60 && !cancelSearchRef.current) {
-				await new Promise((resolve) => setTimeout(resolve, 1000));
+			// Poll until the plugins are done (status leaves "Running"), the
+			// user cancels, or the view is left.
+			const startedAt = Date.now();
+			while (
+				!cancelSearchRef.current &&
+				Date.now() - startedAt < MAX_SEARCH_DURATION_MS
+			) {
+				await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+				if (cancelSearchRef.current) break;
 
 				const { results: searchResults, status } =
 					await qbitClient.getSearchResults(id);
@@ -109,10 +124,14 @@ export function SearchView() {
 					setResults(searchResults);
 				}
 
-				if (status === "Stopped" || status === "Completed") {
+				if (status !== "Running") {
+					currentSearchIdRef.current = null;
 					break;
 				}
-				attempts++;
+			}
+			// Timed out: don't leave the search running on the server.
+			if (currentSearchIdRef.current != null && !cancelSearchRef.current) {
+				qbitClient.stopSearch(id).catch(() => {});
 			}
 		} catch (err) {
 			console.error("Search error:", err);
@@ -123,14 +142,12 @@ export function SearchView() {
 			setIsSearching(false);
 			currentSearchIdRef.current = null;
 			cancelSearchRef.current = false;
-			setCancelSearch(false);
 		}
 	};
 
 	const handleCancelSearch = async () => {
-		// set both ref and state (state is used for UI, ref for immediate loop control)
+		// The ref stops the polling loop immediately.
 		cancelSearchRef.current = true;
-		setCancelSearch(true);
 
 		const id = currentSearchIdRef.current;
 		if (id != null) {
