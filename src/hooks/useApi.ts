@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { qbitClient } from "@/lib/api";
+import type { Torrent } from "@/types";
 
 export function useAppVersion() {
 	return useQuery({
@@ -19,10 +20,41 @@ export function useTransferInfo(enableBackgroundRefetch = false) {
 	});
 }
 
-export function useTorrents(filter?: string, category?: string) {
+// Torrent list kept in sync through /sync/maindata: each poll only transfers
+// what changed since the previous response id (rid). Shared by every
+// useTorrents() consumer; the server sends a full update whenever the rid
+// is 0 or unknown (e.g. new session), so a stale rid is harmless.
+const torrentSync = { rid: 0, torrents: new Map<string, Torrent>() };
+let pendingSync: Promise<unknown> = Promise.resolve();
+
+// Syncs run one after another so that each one starts from the latest rid.
+function syncTorrents(): Promise<Torrent[]> {
+	const next = pendingSync.catch(() => {}).then(applyNextSync);
+	pendingSync = next;
+	return next;
+}
+
+async function applyNextSync(): Promise<Torrent[]> {
+	try {
+		const data = await qbitClient.getMainData(torrentSync.rid);
+		if (data.full_update) torrentSync.torrents = new Map();
+		for (const [hash, changes] of Object.entries(data.torrents ?? {})) {
+			const previous = torrentSync.torrents.get(hash);
+			torrentSync.torrents.set(hash, { ...previous, ...changes, hash } as Torrent);
+		}
+		data.torrents_removed?.forEach((hash) => torrentSync.torrents.delete(hash));
+		torrentSync.rid = data.rid;
+	} catch (error) {
+		torrentSync.rid = 0;
+		throw error;
+	}
+	return Array.from(torrentSync.torrents.values());
+}
+
+export function useTorrents() {
 	return useQuery({
-		queryKey: ["torrents", filter, category],
-		queryFn: () => qbitClient.getTorrents(filter, category),
+		queryKey: ["torrents"],
+		queryFn: syncTorrents,
 		enabled: !!qbitClient.isConfigured(),
 		refetchInterval: 5000,
 	});
