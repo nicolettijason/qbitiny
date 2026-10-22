@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useStorage } from "@/contexts/StorageContext";
@@ -10,6 +11,7 @@ export function LoginForm() {
 	const storage = useStorage();
 	const [username, setUsername] = useState(storage.qbitUser);
 	const [password, setPassword] = useState("");
+	const [rememberMe, setRememberMe] = useState(true);
 	const [error, setError] = useState("");
 	const { login, isLoading } = useAuth();
 
@@ -18,7 +20,7 @@ export function LoginForm() {
 		setError("");
 
 		try {
-			await login(username, password);
+			await login(username, password, rememberMe);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Login failed");
 		}
@@ -56,6 +58,16 @@ export function LoginForm() {
 								onChange={(e) => setPassword(e.target.value)}
 								required
 							/>
+						</div>
+						<div className="flex items-center space-x-2">
+							<Checkbox
+								id="remember_me"
+								checked={rememberMe}
+								onCheckedChange={(checked) => setRememberMe(!!checked)}
+							/>
+							<Label htmlFor="remember_me" className="font-normal">
+								Remember me on this device
+							</Label>
 						</div>
 						{error && <p className="text-sm text-destructive">{error}</p>}
 						<Button type="submit" className="w-full" disabled={isLoading}>

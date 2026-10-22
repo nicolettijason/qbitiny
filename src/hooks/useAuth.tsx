@@ -13,7 +13,11 @@ interface AuthContextType {
 	isAuthenticated: boolean;
 	isLoading: boolean;
 	username: string;
-	login: (username: string, password: string) => Promise<void>;
+	login: (
+		username: string,
+		password: string,
+		rememberMe: boolean,
+	) => Promise<void>;
 	logout: () => Promise<void>;
 }
 
@@ -25,24 +29,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const storage = useStorage();
 	const initialized = useRef(false);
 
-	// On startup, reuse qBittorrent's session cookie if it is still valid.
-	// Only the username is persisted; the password is never stored.
+	// On startup, reuse qBittorrent's session cookie if it is still valid,
+	// otherwise log in with the remembered credentials (if "Remember me" was
+	// ticked). Either way, the client can then log in again by itself when
+	// the session expires.
 	useEffect(() => {
 		if (initialized.current) return;
 		initialized.current = true;
 
 		const restoreSession = async () => {
-			if (storage.qbitUser) {
-				qbitClient.setCredentials(storage.qbitUser, "");
-			}
+			const { qbitUser, qbitPass } = storage;
+			if (qbitUser) qbitClient.setCredentials(qbitUser, qbitPass);
 			if (await qbitClient.checkSession()) return true;
-
-			// Migration: older versions stored the password in localStorage.
-			// Use it one last time to open a session, then it is deleted.
-			const legacyPass = storage.consumeLegacyQbitPass();
-			if (storage.qbitUser && legacyPass) {
-				qbitClient.setCredentials(storage.qbitUser, legacyPass);
-				return qbitClient.login().catch(() => false);
+			if (qbitUser && qbitPass) {
+				const success = await qbitClient.login().catch(() => false);
+				if (!success) storage.setQbitPass("");
+				return success;
 			}
 			return false;
 		};
@@ -53,23 +55,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const login = async (newUsername: string, password: string) => {
+	const login = async (
+		newUsername: string,
+		password: string,
+		rememberMe: boolean,
+	) => {
 		setIsLoading(true);
 		storage.setQbitUser(newUsername);
 		try {
 			qbitClient.setCredentials(newUsername, password);
 			const success = await qbitClient.login();
-			if (success) {
-				setIsAuthenticated(true);
-			} else {
-				throw new Error("Invalid username or password");
-			}
+			if (!success) throw new Error("Invalid username or password");
+			storage.setQbitPass(rememberMe ? password : "");
+			setIsAuthenticated(true);
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
 	const logout = async () => {
+		storage.setQbitPass("");
 		try {
 			await qbitClient.logout();
 		} finally {

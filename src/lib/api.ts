@@ -17,12 +17,14 @@ import { demoClient } from "./demoClient";
 
 const DEFAULT_USER = "admin";
 
-// Authentication relies solely on qBittorrent's SID session cookie, which the
-// browser stores and sends itself (same origin). The password is never kept.
+// Authentication relies on qBittorrent's SID session cookie, which the browser
+// stores and sends itself (same origin). The password is only kept in memory,
+// to log in again transparently when the session expires.
 class QBittorrentClient {
 	private username: string;
 	private password: string;
 	private authenticated = false;
+	private pendingLogin: Promise<boolean> | null = null;
 
 	constructor(username?: string, password?: string) {
 		this.username = username || DEFAULT_USER;
@@ -46,7 +48,19 @@ class QBittorrentClient {
 		endpoint: string,
 		options: RequestInit = {},
 	): Promise<T> {
-		const response = await fetch(endpoint, options);
+		let response = await fetch(endpoint, options);
+
+		// Session expired: log in again once with the in-memory credentials,
+		// then retry the request.
+		if (
+			(response.status === 403 || response.status === 401) &&
+			this.authenticated &&
+			this.password
+		) {
+			if (await this.relogin()) {
+				response = await fetch(endpoint, options);
+			}
+		}
 
 		const responseText = await response.text();
 
@@ -75,9 +89,20 @@ class QBittorrentClient {
 		});
 		// qBittorrent answers 200 with "Fails." on wrong credentials.
 		const body = await response.text();
-		this.password = "";
 		this.authenticated = response.ok && body.trim() === "Ok.";
 		return this.authenticated;
+	}
+
+	// Concurrent requests hitting an expired session share a single login.
+	private relogin(): Promise<boolean> {
+		if (!this.pendingLogin) {
+			this.pendingLogin = this.login()
+				.catch(() => false)
+				.finally(() => {
+					this.pendingLogin = null;
+				});
+		}
+		return this.pendingLogin;
 	}
 
 	/** Checks whether the browser already holds a valid session cookie. */
@@ -93,6 +118,7 @@ class QBittorrentClient {
 
 	async logout(): Promise<void> {
 		this.authenticated = false;
+		this.password = "";
 		await this.request("/api/v2/auth/logout", { method: "POST" });
 	}
 
