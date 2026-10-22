@@ -12,11 +12,16 @@ import {
 	Sun,
 	Moon,
 	Loader2,
+	Turtle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { useTransferInfo } from "@/hooks/useApi";
+import {
+	useAltSpeedLimits,
+	useToggleAltSpeedLimits,
+	useTransferInfo,
+} from "@/hooks/useApi";
 import { useStoragePreferences } from "@/hooks/useStoragePreferences";
 import { formatSize } from "@/helpers";
 import { useTheme } from "next-themes";
@@ -35,6 +40,8 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 	const { theme, setTheme } = useTheme();
 	const { sizeUnit, interactiveTabTitle } = useStoragePreferences();
 	const { data: transferInfo } = useTransferInfo(interactiveTabTitle);
+	const { data: altSpeedLimits } = useAltSpeedLimits();
+	const toggleAltSpeedLimits = useToggleAltSpeedLimits();
 
 	const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
 		{
@@ -123,6 +130,25 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 						) : (
 							<Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
 						)}
+						{/* Alternative speed limits toggle */}
+						<Button
+							variant={altSpeedLimits ? "secondary" : "ghost"}
+							size="icon"
+							className={cn(
+								"h-8 w-8",
+								altSpeedLimits && "text-orange-500 hover:text-orange-500",
+							)}
+							onClick={() => toggleAltSpeedLimits.mutate()}
+							disabled={toggleAltSpeedLimits.isPending}
+							title={
+								altSpeedLimits
+									? "Alternative speed limits: on"
+									: "Alternative speed limits: off"
+							}
+							aria-pressed={!!altSpeedLimits}
+						>
+							<Turtle className="h-4 w-4" />
+						</Button>
 						{/* Theme toggle */}
 						<Button
 							variant="ghost"

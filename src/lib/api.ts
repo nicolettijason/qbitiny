@@ -151,6 +151,20 @@ class QBittorrentClient {
 		return this.request<TransferInfo>("/api/v2/transfer/info");
 	}
 
+	/** Whether the alternative speed limits are enabled. */
+	async getAltSpeedLimitsEnabled(): Promise<boolean> {
+		const mode = await this.request<number | string>(
+			"/api/v2/transfer/speedLimitsMode",
+		);
+		return String(mode) === "1";
+	}
+
+	async toggleAltSpeedLimits(): Promise<void> {
+		await this.request("/api/v2/transfer/toggleSpeedLimitsMode", {
+			method: "POST",
+		});
+	}
+
 	/**
 	 * Incremental sync: only returns what changed since response `rid`
 	 * (a full update when `rid` is 0 or unknown to the server).
