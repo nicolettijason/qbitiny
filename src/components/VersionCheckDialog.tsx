@@ -68,21 +68,21 @@ export function VersionCheckDialog({ currentVersion }: VersionCheckDialogProps) 
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
 						<Download className="h-5 w-5" />
-						Nouvelle version disponible
+						New version available
 					</DialogTitle>
 					<DialogDescription>
-						Une nouvelle version de qBitiny est disponible. Veuillez mettre à jour
-						pour bénéficier des dernières fonctionnalités et corrections de bugs.
+						A new version of qBitiny is available. Please update to get the
+						latest features and bug fixes.
 					</DialogDescription>
 				</DialogHeader>
 
 				<div className="space-y-2 rounded-lg bg-muted p-3">
 					<div className="text-sm">
-						<span className="font-medium">Version actuelle:</span>{" "}
+						<span className="font-medium">Current version:</span>{" "}
 						<span className="text-muted-foreground">{currentVersion}</span>
 					</div>
 					<div className="text-sm">
-						<span className="font-medium">Dernière version:</span>{" "}
+						<span className="font-medium">Latest version:</span>{" "}
 						<span className="text-primary font-semibold">{latestVersion}</span>
 					</div>
 				</div>
@@ -97,7 +97,7 @@ export function VersionCheckDialog({ currentVersion }: VersionCheckDialogProps) 
 						htmlFor="dont-show-again"
 						className="text-sm font-normal cursor-pointer"
 					>
-						Ne plus afficher pour cette version
+						Don't show again for this version
 					</Label>
 				</div>
 
@@ -108,11 +108,11 @@ export function VersionCheckDialog({ currentVersion }: VersionCheckDialogProps) 
 						className="gap-2"
 					>
 						<X className="h-4 w-4" />
-						Plus tard
+						Later
 					</Button>
 					<Button onClick={handleDownload} className="gap-2">
 						<Download className="h-4 w-4" />
-						Télécharger
+						Download
 					</Button>
 				</DialogFooter>
 			</DialogContent>
