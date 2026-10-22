@@ -25,7 +25,8 @@ npm run demo:build
 - Sortie dans `release/qbitiny/public/` **versionnée dans git** (c'est ce que l'utilisateur pointe comme dossier Web UI alternatif dans qBittorrent). Les commits « rebuild » / « build release » régénèrent ce dossier.
 - `base: "./"` → chemins relatifs, nécessaire pour être servi par qBittorrent.
 - Plugin Vite maison `stripUnusedFlagVariant` : retire les drapeaux carrés (`.fis`) de `flag-icons` pour diviser par 2 les SVG embarqués.
-- `VITE_APP_VERSION` est injecté depuis `package.json` (`define`). Pour publier : bumper la version dans `package.json`, rebuild, créer une release GitHub avec tag `vX.Y.Z` **et un asset `.zip`** (le vérificateur de MAJ cherche un asset `.zip`).
+- `VITE_APP_VERSION` est injecté depuis `package.json` (`define`). Pour publier : bumper la version dans `package.json` (+ rebuild/commit de `release/`), puis `git tag vX.Y.Z && git push origin vX.Y.Z`. Le workflow `.github/workflows/release.yml` vérifie que le tag = version du `package.json`, build, zippe `release/qbitiny` en `qbitiny-vX.Y.Z.zip` et crée la release (ou ajoute le zip si elle existe déjà). Le vérificateur de MAJ (`lib/github.ts`) pointe vers ce `.zip`.
+- CI (`.github/workflows/ci.yml`) sur chaque PR et push sur `main` : `npm ci` + `npm run build` (bloquant) + `npm run lint` (non bloquant tant que la dette de lint existe).
 
 ## Architecture (`src/`)
 

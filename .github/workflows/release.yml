@@ -1,0 +1,56 @@
+name: Release
+
+# Push a version tag to publish a release:
+#   git tag v1.4.0 && git push origin v1.4.0
+# The tag must match the "version" field of package.json.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Check tag matches package.json version
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $VERSION"
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # The archive contains qbitiny/public/...: extract it and point
+      # qBittorrent's alternative Web UI to the "qbitiny" folder.
+      - name: Package
+        run: |
+          cd release
+          zip -r "../qbitiny-$GITHUB_REF_NAME.zip" qbitiny
+
+      # Creates the release, or adds the archive to it if it already exists
+      # (e.g. created by hand from the GitHub UI).
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ZIP="qbitiny-$GITHUB_REF_NAME.zip"
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$ZIP" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$ZIP" \
+              --title "qbitiny $GITHUB_REF_NAME" --generate-notes
+          fi
