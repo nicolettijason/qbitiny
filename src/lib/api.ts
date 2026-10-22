@@ -1,6 +1,6 @@
 import type {
 	AppConfig,
-	Torrent,
+	MainData,
 	TorrentFile,
 	TorrentTracker,
 	RSSFeed,
@@ -151,16 +151,12 @@ class QBittorrentClient {
 		return this.request<TransferInfo>("/api/v2/transfer/info");
 	}
 
-	async getTorrents(filter?: string, category?: string): Promise<Torrent[]> {
-		const params = new URLSearchParams();
-		if (filter) params.set("filter", filter);
-		if (category) params.set("category", category);
-
-		const query = params.toString();
-		const url = query
-			? `/api/v2/torrents/info?${query}`
-			: "/api/v2/torrents/info";
-		return this.request<Torrent[]>(url);
+	/**
+	 * Incremental sync: only returns what changed since response `rid`
+	 * (a full update when `rid` is 0 or unknown to the server).
+	 */
+	async getMainData(rid: number): Promise<MainData> {
+		return this.request<MainData>(`/api/v2/sync/maindata?rid=${rid}`);
 	}
 
 	async getTorrentFiles(hash: string): Promise<TorrentFile[]> {

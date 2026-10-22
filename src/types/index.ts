@@ -66,7 +66,16 @@ export interface Torrent {
 	upspeed_avg: number;
 }
 
-export type ColumnsConfig = Record<Columns, ColumnConfigDetail>;
+/** Response of /api/v2/sync/maindata (only the parts used by the app). */
+export interface MainData {
+	rid: number;
+	full_update?: boolean;
+	/** Keyed by hash; on partial updates only the changed fields are present. */
+	torrents?: Record<string, Partial<Torrent>>;
+	torrents_removed?: string[];
+}
+
+export type ColumnsConfig =Record<Columns, ColumnConfigDetail>;
 
 export type ColumnConfigDetail = {
 	active: boolean;

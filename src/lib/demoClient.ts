@@ -6,6 +6,7 @@ import type {
 	RSSItem,
 	SearchResult,
 	LogEntry,
+	MainData,
 	TransferInfo,
 	TorrentPeersResponse,
 } from "@/types";
@@ -72,8 +73,18 @@ class DemoQBittorrentClient {
 		};
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	async getTorrents(_filter?: string, _category?: string): Promise<Torrent[]> {
+	// Always answers with a full update: the demo data never changes.
+	async getMainData(_rid: number): Promise<MainData> {
+		return {
+			rid: _rid + 1,
+			full_update: true,
+			torrents: Object.fromEntries(
+				this.demoTorrents().map((torrent) => [torrent.hash, torrent]),
+			),
+		};
+	}
+
+	private demoTorrents(): Torrent[] {
 		const now = Math.floor(Date.now() / 1000);
 		return [
 			{
