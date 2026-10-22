@@ -145,7 +145,43 @@ export function getTrackerStatusColor(status: number): string {
 	}
 }
 
-export const generateTagColor = (tag?: string) => {
+/**
+ * Copies text to the clipboard. `navigator.clipboard` only exists on secure
+ * origins (HTTPS / localhost), which a qBittorrent server reached over plain
+ * HTTP on the LAN is not: fall back to a hidden textarea + execCommand.
+ */
+export async function copyToClipboard(text: string): Promise<boolean> {
+	if (navigator.clipboard && window.isSecureContext) {
+		try {
+			await navigator.clipboard.writeText(text);
+			return true;
+		} catch {
+			/* fall back below */
+		}
+	}
+
+	// Insert it inside the open dialog/menu (if any), whose focus trap would
+	// otherwise steal the focus back from a textarea placed in <body>.
+	const container =
+		document.activeElement?.closest('[role="dialog"], [role="menu"]') ??
+		document.body;
+	const textarea = document.createElement("textarea");
+	textarea.value = text;
+	textarea.setAttribute("readonly", "");
+	textarea.style.position = "fixed";
+	textarea.style.opacity = "0";
+	container.appendChild(textarea);
+	textarea.select();
+	try {
+		return document.execCommand("copy");
+	} catch {
+		return false;
+	} finally {
+		textarea.remove();
+	}
+}
+
+export const generateTagColor =(tag?: string) => {
 	if (!tag) {
 		return undefined;
 	}

@@ -3,6 +3,7 @@ import {
 	ChevronDown,
 	ChevronUp,
 	Clock,
+	Copy,
 	Download,
 	FastForward,
 	File,
@@ -42,6 +43,7 @@ import {
 	getTrackerStatusColor,
 	getTrackerStatusLabel,
 	isStoppedState,
+	copyToClipboard,
 } from "@/helpers";
 import type {
 	Torrent,
@@ -102,9 +104,8 @@ function InfoRow({
 	const [copied, setCopied] = useState(false);
 	const isString = typeof value === "string";
 
-	const handleCopy = () => {
-		if (isString) {
-			navigator.clipboard.writeText(value as string);
+	const handleCopy = async () => {
+		if (isString && (await copyToClipboard(value as string))) {
 			setCopied(true);
 			setTimeout(() => setCopied(false), 1500);
 		}
@@ -903,10 +904,23 @@ export function TorrentDetailDialog({
 									)}
 								</button>
 								{showMagnet && (
-									<div className="px-3 py-2">
-										<p className="text-[10px] font-mono break-all text-muted-foreground select-all">
+									<div className="px-3 py-2 flex items-start gap-2">
+										<p className="flex-1 text-[10px] font-mono break-all text-muted-foreground select-all">
 											{torrent.magnet_uri}
 										</p>
+										<Button
+											variant="outline"
+											size="sm"
+											className="h-7 text-xs flex-shrink-0"
+											onClick={async () => {
+												if (await copyToClipboard(torrent.magnet_uri))
+													toast.success("Magnet link copied");
+												else toast.error("Could not copy the magnet link");
+											}}
+										>
+											<Copy className="h-3 w-3 mr-1" />
+											Copy
+										</Button>
 									</div>
 								)}
 							</div>
