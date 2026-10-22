@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import type { Torrent } from "@/types";
+import type { Columns, Torrent } from "@/types";
 
-type SortDirection = "asc" | "desc";
-type TorrentStateFilter =
+export type SortDirection = "asc" | "desc";
+export type TorrentStateFilter =
 	| "downloading"
 	| "seeding"
 	| "completed"
@@ -10,9 +10,9 @@ type TorrentStateFilter =
 	| "stopped"
 	| "error";
 
-const PAGE_SIZE = 20;
+export const PAGE_SIZE = 20;
 
-const STATE_FILTERS: TorrentStateFilter[] = [
+export const STATE_FILTERS: TorrentStateFilter[] = [
 	"downloading",
 	"seeding",
 	"completed",
@@ -28,7 +28,7 @@ function toggleSetItem<T>(set: Set<T>, value: T): Set<T> {
 	return next;
 }
 
-function getStateFilterLabel(state: TorrentStateFilter): string {
+export function getStateFilterLabel(state: TorrentStateFilter): string {
 	const labels: Record<TorrentStateFilter, string> = {
 		downloading: "Downloading",
 		seeding: "Seeding",
@@ -38,6 +38,14 @@ function getStateFilterLabel(state: TorrentStateFilter): string {
 		error: "Error",
 	};
 	return labels[state];
+}
+
+function getTrackerHost(tracker: string): string {
+	try {
+		return new URL(tracker).hostname || tracker;
+	} catch {
+		return tracker;
+	}
 }
 
 function matchesTorrentState(
@@ -76,41 +84,75 @@ function matchesFilter(
 	selectedCategories: Set<string>,
 	selectedTrackers: Set<string>,
 ): boolean {
-	const hasStateFilter = selectedStates.size > 0;
-	const hasCategoryFilter = selectedCategories.size > 0;
-	const hasTrackerFilter = selectedTrackers.size > 0;
-
-	if (!hasStateFilter && !hasCategoryFilter && !hasTrackerFilter) {
-		return true;
-	}
-
-	if (hasStateFilter) {
-		const stateMatches = Array.from(selectedStates).some((state) =>
+	if (
+		selectedStates.size > 0 &&
+		!Array.from(selectedStates).some((state) =>
 			matchesTorrentState(torrent, state),
-		);
-		if (!stateMatches) return false;
+		)
+	) {
+		return false;
 	}
 
-	if (hasCategoryFilter) {
-		if (!selectedCategories.has(torrent.category || "")) return false;
+	if (
+		selectedCategories.size > 0 &&
+		!selectedCategories.has(torrent.category || "")
+	) {
+		return false;
 	}
 
-	if (hasTrackerFilter) {
-		let trackerHost = torrent.tracker;
-		try {
-			trackerHost = new URL(torrent.tracker).hostname || torrent.tracker;
-		} catch {
-			/* keep raw */
-		}
-		if (!selectedTrackers.has(trackerHost)) return false;
+	if (
+		selectedTrackers.size > 0 &&
+		!selectedTrackers.has(getTrackerHost(torrent.tracker))
+	) {
+		return false;
 	}
 
 	return true;
 }
 
-type Columns = keyof Torrent | "category" | "tracker";
+function compareTorrents(a: Torrent, b: Torrent, field: Columns): number {
+	switch (field) {
+		case "name":
+			return a.name.localeCompare(b.name);
+		case "size":
+			return a.size - b.size;
+		case "progress":
+			return a.progress - b.progress;
+		case "dlspeed":
+			return a.dlspeed - b.dlspeed;
+		case "upspeed":
+			return a.upspeed - b.upspeed;
+		case "eta":
+			return a.eta - b.eta;
+		case "state":
+			return a.state.localeCompare(b.state);
+		case "ratio":
+			return a.ratio - b.ratio;
+		case "num_seeds":
+			return a.num_seeds - b.num_seeds + (a.num_complete - b.num_complete);
+		case "num_leechs":
+			return (
+				a.num_leechs - b.num_leechs + (a.num_incomplete - b.num_incomplete)
+			);
+		case "added_on":
+			return a.added_on - b.added_on;
+		case "uploaded":
+			return a.uploaded - b.uploaded;
+		case "uploaded_session":
+			return a.uploaded_session - b.uploaded_session;
+		case "category":
+			return a.category.localeCompare(b.category);
+		case "tracker":
+			return a.tracker.localeCompare(b.tracker);
+		default:
+			return 0;
+	}
+}
 
-export function useTorrentListState(torrents: Torrent[]) {
+/**
+ * Selection, search, filters, sorting and pagination state for the torrent list.
+ */
+export function useTorrentListState(torrents: Torrent[] | undefined) {
 	const [selected, setSelected] = useState<Set<string>>(new Set());
 	const [sortField, setSortField] = useState<Columns>("added_on");
 	const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -127,22 +169,21 @@ export function useTorrentListState(torrents: Torrent[]) {
 	);
 
 	const toggleStateFilter = (state: TorrentStateFilter) => {
-		setSelectedStates(toggleSetItem(selectedStates, state));
+		setSelectedStates((prev) => toggleSetItem(prev, state));
 		setCurrentPage(1);
 	};
 
 	const toggleCategoryFilter = (category: string) => {
-		setSelectedCategories(toggleSetItem(selectedCategories, category));
+		setSelectedCategories((prev) => toggleSetItem(prev, category));
 		setCurrentPage(1);
 	};
 
 	const toggleTrackerFilter = (tracker: string) => {
-		setSelectedTrackers(toggleSetItem(selectedTrackers, tracker));
+		setSelectedTrackers((prev) => toggleSetItem(prev, tracker));
 		setCurrentPage(1);
 	};
 
 	const resetFilters = () => {
-		setSearchQuery("");
 		setSelectedStates(new Set());
 		setSelectedCategories(new Set());
 		setSelectedTrackers(new Set());
@@ -153,101 +194,81 @@ export function useTorrentListState(torrents: Torrent[]) {
 		selectedStates.size + selectedCategories.size + selectedTrackers.size;
 
 	const uniqueCategories = useMemo(() => {
-		const cats = new Set<string>();
-		torrents.forEach((t) => {
-			if (t.category) cats.add(t.category);
-		});
+		const cats = new Set<string>(torrents?.map((t) => t.category) || []);
 		return Array.from(cats).sort();
 	}, [torrents]);
 
 	const uniqueTrackers = useMemo(() => {
 		const trackers = new Set<string>();
-		torrents.forEach((t) => {
-			if (t.tracker) {
-				try {
-					const host = new URL(t.tracker).hostname || t.tracker;
-					trackers.add(host);
-				} catch {
-					trackers.add(t.tracker);
-				}
-			}
+		torrents?.forEach((t) => {
+			const host = getTrackerHost(t.tracker);
+			if (host) trackers.add(host);
 		});
 		return Array.from(trackers).sort();
 	}, [torrents]);
 
 	const sortedTorrents = useMemo(() => {
-		let filtered = torrents.filter((t) =>
-			t.name.toLowerCase().includes(searchQuery.toLowerCase()),
+		if (!torrents) return [];
+		const query = searchQuery.trim().toLowerCase();
+		const filtered = torrents.filter(
+			(t) =>
+				matchesFilter(t, selectedStates, selectedCategories, selectedTrackers) &&
+				(!query || t.name.toLowerCase().includes(query)),
 		);
-
-		filtered = filtered.filter((t) =>
-			matchesFilter(
-				t,
-				selectedStates,
-				selectedCategories,
-				selectedTrackers,
-			),
-		);
-
-		const sorted = [...filtered].sort((a, b) => {
-			let aVal: unknown = a[sortField as keyof Torrent];
-			let bVal: unknown = b[sortField as keyof Torrent];
-
-			if (sortField === "category") {
-				aVal = a.category;
-				bVal = b.category;
-			} else if (sortField === "tracker") {
-				aVal = a.tracker;
-				bVal = b.tracker;
-			}
-
-			if (aVal === bVal) return 0;
-			if (aVal === null || aVal === undefined) return 1;
-			if (bVal === null || bVal === undefined) return -1;
-
-			const comparison =
-				typeof aVal === "string" && typeof bVal === "string"
-					? aVal.localeCompare(bVal)
-					: (aVal as number) - (bVal as number);
-
-			return sortDirection === "asc" ? comparison : -comparison;
+		return filtered.sort((a, b) => {
+			const cmp = compareTorrents(a, b, sortField);
+			return sortDirection === "asc" ? cmp : -cmp;
 		});
+	}, [
+		torrents,
+		searchQuery,
+		sortField,
+		sortDirection,
+		selectedStates,
+		selectedCategories,
+		selectedTrackers,
+	]);
 
-		return sorted;
-	}, [torrents, searchQuery, sortField, sortDirection, selectedStates, selectedCategories, selectedTrackers]);
-
-	const totalPages = Math.ceil(sortedTorrents.length / PAGE_SIZE);
+	const totalPages = Math.max(1, Math.ceil(sortedTorrents.length / PAGE_SIZE));
 	const paginatedTorrents = sortedTorrents.slice(
 		(currentPage - 1) * PAGE_SIZE,
 		currentPage * PAGE_SIZE,
 	);
 
 	const handleSort = (field: Columns) => {
-		if (sortField === field) {
-			setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-		} else {
+		if (sortField === field)
+			setSortDirection((dir) => (dir === "asc" ? "desc" : "asc"));
+		else {
 			setSortField(field);
-			setSortDirection("desc");
+			setSortDirection("asc");
 		}
+		setCurrentPage(1);
 	};
 
-	const handleSelect = (hash: string) => {
-		setSelected(toggleSetItem(selected, hash));
+	const handleSelect = (hash: string, checked: boolean) => {
+		setSelected((prev) => {
+			const next = new Set(prev);
+			if (checked) next.add(hash);
+			else next.delete(hash);
+			return next;
+		});
 	};
 
-	const handleSelectAll = () => {
-		if (selected.size === paginatedTorrents.length) {
-			setSelected(new Set());
-		} else {
-			setSelected(new Set(paginatedTorrents.map((t) => t.hash)));
-		}
+	const handleSelectAll = (checked: boolean) => {
+		if (checked) setSelected(new Set(sortedTorrents.map((t) => t.hash)));
+		else setSelected(new Set());
 	};
+
+	const clearSelection = () => setSelected(new Set());
 
 	return {
 		selected,
-		setSelected,
+		clearSelection,
+		handleSelect,
+		handleSelectAll,
 		sortField,
 		sortDirection,
+		handleSort,
 		currentPage,
 		setCurrentPage,
 		searchQuery,
@@ -265,13 +286,5 @@ export function useTorrentListState(torrents: Torrent[]) {
 		sortedTorrents,
 		paginatedTorrents,
 		totalPages,
-		handleSort,
-		handleSelect,
-		handleSelectAll,
-		// Exported for use in filter dropdown
-		STATE_FILTERS,
-		getStateFilterLabel,
-		matchesTorrentState,
-		PAGE_SIZE,
 	};
 }
