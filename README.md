@@ -24,7 +24,7 @@ Built with React, Vite and TypeScript.
 
 Download the `qbitiny-vX.Y.Z.zip` archive from the [latest release](https://github.com/nicolettijason/qbitiny/releases/latest) and extract it, then in qBittorrent (Options → Web UI) enable "Use alternative Web UI" and set its path to the extracted `qbitiny` folder.
 
-Alternatively, clone this repository and point the alternative Web UI path to the `release/qbitiny` folder.
+Alternatively, clone this repository, run `npm install && npm run build`, and point the alternative Web UI path to the generated `release/qbitiny` folder.
 
 ## Development
 

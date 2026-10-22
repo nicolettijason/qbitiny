@@ -22,3 +22,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Build output (published as a zip by .github/workflows/release.yml)
+release/
