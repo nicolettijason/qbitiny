@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
 	ArrowDown,
 	ArrowUp,
@@ -49,6 +49,12 @@ import {
 	useSetForceStart,
 } from "@/hooks/useApi";
 import { useStoragePreferences } from "@/hooks/useStoragePreferences";
+import {
+	STATE_FILTERS,
+	getStateFilterLabel,
+	useTorrentListState,
+	type SortDirection,
+} from "@/hooks/useTorrentListState";
 import type { Columns, ColumnsConfig, Torrent } from "@/types";
 import {
 	formatDate,
@@ -63,115 +69,6 @@ import {
 } from "@/helpers";
 import { columnsDictionary } from "@/constants";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type SortDirection = "asc" | "desc";
-type TorrentStateFilter =
-	| "downloading"
-	| "seeding"
-	| "completed"
-	| "paused"
-	| "stopped"
-	| "error";
-
-const PAGE_SIZE = 20;
-
-const STATE_FILTERS: TorrentStateFilter[] = [
-	"downloading",
-	"seeding",
-	"completed",
-	"paused",
-	"stopped",
-	"error",
-];
-
-function toggleSetItem<T>(set: Set<T>, value: T): Set<T> {
-	const next = new Set(set);
-	if (next.has(value)) next.delete(value);
-	else next.add(value);
-	return next;
-}
-
-function getStateFilterLabel(state: TorrentStateFilter): string {
-	const labels: Record<TorrentStateFilter, string> = {
-		downloading: "Downloading",
-		seeding: "Seeding",
-		completed: "Completed",
-		paused: "Paused",
-		stopped: "Stopped",
-		error: "Error",
-	};
-	return labels[state];
-}
-
-function matchesTorrentState(
-	torrent: Torrent,
-	state: TorrentStateFilter,
-): boolean {
-	const torrentState = torrent.state;
-	const isCompleted = torrent.progress === 1;
-
-	switch (state) {
-		case "downloading":
-			return (
-				torrentState.includes("DL") ||
-				torrentState === "metaDL" ||
-				torrentState === "forcedMetaDL" ||
-				torrentState === "allocating"
-			);
-		case "seeding":
-			return torrentState.includes("UP") && !torrentState.includes("stopped");
-		case "completed":
-			return isCompleted;
-		case "paused":
-			return torrentState.startsWith("paused");
-		case "stopped":
-			return torrentState.startsWith("stopped");
-		case "error":
-			return torrentState === "error" || torrentState === "missingFiles";
-		default:
-			return false;
-	}
-}
-
-function matchesFilter(
-	torrent: Torrent,
-	selectedStates: Set<TorrentStateFilter>,
-	selectedCategories: Set<string>,
-	selectedTrackers: Set<string>,
-): boolean {
-	// Si aucun filtre n'est sélectionné, tout affiche
-	const hasStateFilter = selectedStates.size > 0;
-	const hasCategoryFilter = selectedCategories.size > 0;
-	const hasTrackerFilter = selectedTrackers.size > 0;
-
-	if (!hasStateFilter && !hasCategoryFilter && !hasTrackerFilter) {
-		return true;
-	}
-
-	// Vérifier chaque filtre actif
-	if (hasStateFilter) {
-		const stateMatches = Array.from(selectedStates).some((state) =>
-			matchesTorrentState(torrent, state),
-		);
-		if (!stateMatches) return false;
-	}
-
-	if (hasCategoryFilter) {
-		if (!selectedCategories.has(torrent.category || "")) return false;
-	}
-
-	if (hasTrackerFilter) {
-		let trackerHost = torrent.tracker;
-		try {
-			trackerHost = new URL(torrent.tracker).hostname || torrent.tracker;
-		} catch {
-			/* keep raw */
-		}
-		if (!selectedTrackers.has(trackerHost)) return false;
-	}
-
-	return true;
-}
 
 function SortButton({
 	field,
@@ -253,176 +150,56 @@ export function TorrentsView() {
 	const forceStartMutation = useSetForceStart();
 	const deleteMutation = useDeleteTorrents();
 
-	const [selected, setSelected] = useState<Set<string>>(new Set());
-	const [sortField, setSortField] = useState<Columns>("added_on");
-	const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-	const [currentPage, setCurrentPage] = useState(1);
 	const [detailTorrent, setDetailTorrent] = useState<Torrent | null>(null);
 	const { sizeUnit, tableViewSettings } = useStoragePreferences();
 	const [tableSettings] = useState<ColumnsConfig>(() =>
 		getStoredTableSettings(tableViewSettings),
 	);
-	const [searchQuery, setSearchQuery] = useState("");
-	const [selectedStates, setSelectedStates] = useState<Set<TorrentStateFilter>>(
-		new Set(),
-	);
-	const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
-		new Set(),
-	);
-	const [selectedTrackers, setSelectedTrackers] = useState<Set<string>>(
-		new Set(),
-	);
-
-	function toggleFilter<T>(
-		setter: React.Dispatch<React.SetStateAction<Set<T>>>,
-		value: T,
-	) {
-		setter((prev) => toggleSetItem(prev, value));
-		setCurrentPage(1);
-	}
-
-	const totalActiveFilters =
-		selectedStates.size + selectedCategories.size + selectedTrackers.size;
-
-	// Extraire les catégories et trackers uniques
-	const uniqueCategories = useMemo(() => {
-		const cats = new Set<string>(torrents?.map((t) => t.category) || []);
-		return Array.from(cats).sort();
-	}, [torrents]);
-
-	const uniqueTrackers = useMemo(() => {
-		const trackers = new Set<string>();
-		torrents?.forEach((t) => {
-			let host = t.tracker;
-			try {
-				host = new URL(t.tracker).hostname || t.tracker;
-			} catch {
-				/* keep raw */
-			}
-			if (host) trackers.add(host);
-		});
-		return Array.from(trackers).sort();
-	}, [torrents]);
-
-	function computeSortedTorrents() {
-		if (!torrents) return [];
-		const filtered = torrents
-			.filter((t) =>
-				matchesFilter(t, selectedStates, selectedCategories, selectedTrackers),
-			)
-			.filter((t) =>
-				searchQuery.trim()
-					? t.name.toLowerCase().includes(searchQuery.toLowerCase())
-					: true,
-			);
-		return [...filtered].sort((a, b) => {
-			let cmp: number;
-
-			switch (sortField) {
-				case "name":
-					cmp = a.name.localeCompare(b.name);
-					break;
-				case "size":
-					cmp = a.size - b.size;
-					break;
-				case "progress":
-					cmp = a.progress - b.progress;
-					break;
-				case "dlspeed":
-					cmp = a.dlspeed - b.dlspeed;
-					break;
-				case "upspeed":
-					cmp = a.upspeed - b.upspeed;
-					break;
-				case "eta":
-					cmp = a.eta - b.eta;
-					break;
-				case "state":
-					cmp = a.state.localeCompare(b.state);
-					break;
-				case "ratio":
-					cmp = a.ratio - b.ratio;
-					break;
-				case "num_seeds":
-					cmp = a.num_seeds - b.num_seeds + (a.num_complete - b.num_complete);
-					break;
-				case "num_leechs":
-					cmp =
-						a.num_leechs - b.num_leechs + (a.num_incomplete - b.num_incomplete);
-					break;
-				case "added_on":
-					cmp = a.added_on - b.added_on;
-					break;
-				case "uploaded":
-					cmp = a.uploaded - b.uploaded;
-					break;
-				case "uploaded_session":
-					cmp = a.uploaded_session - b.uploaded_session;
-					break;
-				case "category":
-					cmp = a.category.localeCompare(b.category);
-					break;
-				case "tracker":
-					cmp = a.tracker.localeCompare(b.tracker);
-					break;
-				default:
-					cmp = 0;
-			}
-
-			return sortDirection === "asc" ? cmp : -cmp;
-		});
-	}
-	const sortedTorrents = computeSortedTorrents();
-
-	const totalPages = Math.max(1, Math.ceil(sortedTorrents.length / PAGE_SIZE));
-	const paginatedTorrents = sortedTorrents.slice(
-		(currentPage - 1) * PAGE_SIZE,
-		currentPage * PAGE_SIZE,
-	);
-
-	const handleSelect = (hash: string, checked: boolean) => {
-		setSelected((prev) => {
-			const next = new Set(prev);
-			if (checked) next.add(hash);
-			else next.delete(hash);
-			return next;
-		});
-	};
-
-	const handleSelectAll = (checked: boolean) => {
-		if (!sortedTorrents) return;
-		if (checked) setSelected(new Set(sortedTorrents.map((t) => t.hash)));
-		else setSelected(new Set());
-	};
-
-	const handleSort = (field: Columns) => {
-		if (sortField === field)
-			setSortDirection((dir) => (dir === "asc" ? "desc" : "asc"));
-		else {
-			setSortField(field);
-			setSortDirection("asc");
-		}
-		setCurrentPage(1);
-	};
+	const {
+		selected,
+		clearSelection,
+		handleSelect,
+		handleSelectAll,
+		sortField,
+		sortDirection,
+		handleSort,
+		currentPage,
+		setCurrentPage,
+		searchQuery,
+		setSearchQuery,
+		selectedStates,
+		selectedCategories,
+		selectedTrackers,
+		toggleStateFilter,
+		toggleCategoryFilter,
+		toggleTrackerFilter,
+		resetFilters,
+		totalActiveFilters,
+		uniqueCategories,
+		uniqueTrackers,
+		sortedTorrents,
+		paginatedTorrents,
+		totalPages,
+	} = useTorrentListState(torrents);
 
 	const handlePause = () => {
 		pauseMutation.mutate(Array.from(selected));
-		setSelected(new Set());
+		clearSelection();
 	};
 
 	const handleResume = () => {
 		resumeMutation.mutate(Array.from(selected));
-		setSelected(new Set());
+		clearSelection();
 	};
 
 	const handleForceStart = (forceStart: boolean) => {
 		forceStartMutation.mutate({ hashes: Array.from(selected), forceStart });
-		setSelected(new Set());
+		clearSelection();
 	};
 
 	const handleDelete = (deleteFiles: boolean) => {
 		deleteMutation.mutate({ hashes: Array.from(selected), deleteFiles });
-		setSelected(new Set());
+		clearSelection();
 	};
 
 	const orderedFields = Object.keys(tableSettings).sort((a, b) => {
@@ -707,7 +484,7 @@ export function TorrentsView() {
 									key={state}
 									label={getStateFilterLabel(state)}
 									checked={selectedStates.has(state)}
-									onToggle={() => toggleFilter(setSelectedStates, state)}
+									onToggle={() => toggleStateFilter(state)}
 								/>
 							))}
 						</div>
@@ -725,7 +502,7 @@ export function TorrentsView() {
 											label={category}
 											checked={selectedCategories.has(category)}
 											onToggle={() =>
-												toggleFilter(setSelectedCategories, category)
+												toggleCategoryFilter(category)
 											}
 											badgeColor={generateTagColor(category)}
 										/>
@@ -748,7 +525,7 @@ export function TorrentsView() {
 												label={tracker}
 												checked={selectedTrackers.has(tracker)}
 												onToggle={() =>
-													toggleFilter(setSelectedTrackers, tracker)
+													toggleTrackerFilter(tracker)
 												}
 											/>
 										))}
@@ -765,12 +542,7 @@ export function TorrentsView() {
 										variant="ghost"
 										size="sm"
 										className="w-full text-xs"
-										onClick={() => {
-											setSelectedStates(new Set());
-											setSelectedCategories(new Set());
-											setSelectedTrackers(new Set());
-											setCurrentPage(1);
-										}}
+										onClick={resetFilters}
 									>
 										Reset filters
 									</Button>
