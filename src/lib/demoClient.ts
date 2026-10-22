@@ -60,6 +60,16 @@ class DemoQBittorrentClient {
 
 	async revertToDefaultWebUI(): Promise<void> {}
 
+	private altSpeedLimitsEnabled = false;
+
+	async getAltSpeedLimitsEnabled(): Promise<boolean> {
+		return this.altSpeedLimitsEnabled;
+	}
+
+	async toggleAltSpeedLimits(): Promise<void> {
+		this.altSpeedLimitsEnabled = !this.altSpeedLimitsEnabled;
+	}
+
 	async getTransferInfo(): Promise<TransferInfo> {
 		return {
 			connection_status: "connected",

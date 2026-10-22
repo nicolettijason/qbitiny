@@ -10,6 +10,27 @@ export function useAppVersion() {
 	});
 }
 
+export function useAltSpeedLimits() {
+	return useQuery({
+		queryKey: ["transfer", "altSpeedLimits"],
+		queryFn: () => qbitClient.getAltSpeedLimitsEnabled(),
+		enabled: !!qbitClient.isConfigured(),
+		// Can also be toggled from qBittorrent itself or its scheduler.
+		refetchInterval: 10000,
+	});
+}
+
+export function useToggleAltSpeedLimits() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: () => qbitClient.toggleAltSpeedLimits(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["transfer"] });
+		},
+	});
+}
+
 export function useTransferInfo(enableBackgroundRefetch = false) {
 	return useQuery({
 		queryKey: ["transfer", "info"],
