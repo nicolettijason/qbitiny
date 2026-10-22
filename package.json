@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "demo": "set VITE_DEMO_MODE=true && npm run dev",
-    "demo:build": "set VITE_DEMO_MODE=true && npm run build"
+    "demo": "vite --mode demo",
+    "demo:build": "tsc -b && vite build --mode demo"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
