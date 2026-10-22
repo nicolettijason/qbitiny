@@ -15,6 +15,7 @@ import {
 	Pause,
 	Play,
 	Rewind,
+	Save,
 	Search,
 	Trash2,
 	Upload,
@@ -49,13 +50,18 @@ import {
 	useSetForceStart,
 } from "@/hooks/useApi";
 import { useStoragePreferences } from "@/hooks/useStoragePreferences";
+import { toast } from "@/hooks/use-toast";
 import {
 	STATE_FILTERS,
 	getStateFilterLabel,
 	useTorrentListState,
-	type SortDirection,
 } from "@/hooks/useTorrentListState";
-import type { Columns, ColumnsConfig, Torrent } from "@/types";
+import type {
+	Columns,
+	ColumnsConfig,
+	SortDirection,
+	Torrent,
+} from "@/types";
 import {
 	formatDate,
 	formatSize,
@@ -151,7 +157,12 @@ export function TorrentsView() {
 	const deleteMutation = useDeleteTorrents();
 
 	const [detailTorrent, setDetailTorrent] = useState<Torrent | null>(null);
-	const { sizeUnit, tableViewSettings } = useStoragePreferences();
+	const {
+		sizeUnit,
+		tableViewSettings,
+		torrentListDefaults,
+		setTorrentListDefaults,
+	} = useStoragePreferences();
 	const [tableSettings] = useState<ColumnsConfig>(() =>
 		getStoredTableSettings(tableViewSettings),
 	);
@@ -177,10 +188,16 @@ export function TorrentsView() {
 		totalActiveFilters,
 		uniqueCategories,
 		uniqueTrackers,
+		currentListSettings,
 		sortedTorrents,
 		paginatedTorrents,
 		totalPages,
-	} = useTorrentListState(torrents);
+	} = useTorrentListState(torrents, torrentListDefaults);
+
+	const handleSaveAsDefault = () => {
+		setTorrentListDefaults(currentListSettings);
+		toast.success("Default sort & filters saved");
+	};
 
 	const handlePause = () => {
 		pauseMutation.mutate(Array.from(selected));
@@ -534,21 +551,28 @@ export function TorrentsView() {
 							</>
 						)}
 
-						{totalActiveFilters > 0 && (
-							<>
-								<div className="h-px bg-border my-2" />
-								<div className="px-2 py-2">
-									<Button
-										variant="ghost"
-										size="sm"
-										className="w-full text-xs"
-										onClick={resetFilters}
-									>
-										Reset filters
-									</Button>
-								</div>
-							</>
-						)}
+						<div className="h-px bg-border my-2" />
+						<div className="px-2 py-2 space-y-1">
+							{totalActiveFilters > 0 && (
+								<Button
+									variant="ghost"
+									size="sm"
+									className="w-full text-xs"
+									onClick={resetFilters}
+								>
+									Reset filters
+								</Button>
+							)}
+							<Button
+								variant="ghost"
+								size="sm"
+								className="w-full text-xs"
+								onClick={handleSaveAsDefault}
+							>
+								<Save className="h-3.5 w-3.5 mr-1" />
+								Save sort & filters as default
+							</Button>
+						</div>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>

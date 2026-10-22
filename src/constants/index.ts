@@ -1,4 +1,6 @@
 // src/constants/index.ts
+import type { TorrentListDefaults } from "@/types";
+
 type ColumnEntry = { active: boolean; order: number };
 
 const columnsActive = {
@@ -56,6 +58,14 @@ export const defaultPreferences = {
 	encryption: 0,
 	columns,
 	sizeUnit: "B",
+};
+
+export const defaultTorrentListDefaults: TorrentListDefaults = {
+	sortField: "added_on",
+	sortDirection: "desc",
+	states: [],
+	categories: [],
+	trackers: [],
 };
 
 export const columnsDictionary: Record<keyof typeof columns, string> = {

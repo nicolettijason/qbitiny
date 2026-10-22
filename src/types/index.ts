@@ -260,3 +260,22 @@ export interface Preferences {
 }
 
 export type Columns = keyof typeof defaultPreferences.columns;
+
+export type SortDirection = "asc" | "desc";
+
+export type TorrentStateFilter =
+	| "downloading"
+	| "seeding"
+	| "completed"
+	| "paused"
+	| "stopped"
+	| "error";
+
+/** Sort and filters applied to the torrent list when it is first displayed. */
+export interface TorrentListDefaults {
+	sortField: Columns;
+	sortDirection: SortDirection;
+	states: TorrentStateFilter[];
+	categories: string[];
+	trackers: string[];
+}

@@ -1,6 +1,7 @@
 import { Preferences } from "@/types";
 import { GeneralSettingsTab } from "./GeneralSettingsTab";
 import { TableViewSettingsCard } from "./TableViewSettingsCard";
+import { TorrentListDefaultsCard } from "./TorrentListDefaultsCard";
 import { AppearanceSettingsCard } from "./AppearanceSettingsCard";
 import { DefaultWebUICard } from "./DefaultWebUICard";
 
@@ -32,6 +33,7 @@ export function GeneralTab({
 				preferences={preferences}
 				onUpdatePreference={onUpdatePreference}
 			/>
+			<TorrentListDefaultsCard />
 			<AppearanceSettingsCard />
 			<DefaultWebUICard />
 		</div>
