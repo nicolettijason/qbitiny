@@ -148,7 +148,8 @@ function compareTorrents(a: Torrent, b: Torrent, field: Columns): number {
 
 /**
  * Selection, search, filters, sorting and pagination state for the torrent list.
- * `defaults` only seeds the initial sort and filters.
+ * `defaults` seeds the initial sort and filters, and is re-applied whenever
+ * it changes.
  */
 export function useTorrentListState(
 	torrents: Torrent[] | undefined,
@@ -170,6 +171,19 @@ export function useTorrentListState(
 	const [selectedTrackers, setSelectedTrackers] = useState<Set<string>>(
 		() => new Set(defaults.trackers),
 	);
+
+	// The list stays mounted across tab switches: apply new defaults as soon
+	// as they are saved (e.g. from the settings).
+	const [appliedDefaults, setAppliedDefaults] = useState(defaults);
+	if (defaults !== appliedDefaults) {
+		setAppliedDefaults(defaults);
+		setSortField(defaults.sortField);
+		setSortDirection(defaults.sortDirection);
+		setSelectedStates(new Set(defaults.states));
+		setSelectedCategories(new Set(defaults.categories));
+		setSelectedTrackers(new Set(defaults.trackers));
+		setCurrentPage(1);
+	}
 
 	const toggleStateFilter = (state: TorrentStateFilter) => {
 		setSelectedStates((prev) => toggleSetItem(prev, state));
