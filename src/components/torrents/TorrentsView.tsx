@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import {
 	ArrowDown,
 	ArrowUp,
@@ -41,7 +41,6 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 
-import { TorrentDetailDialog } from "./TorrentDetailDialog";
 import {
 	useTorrents,
 	usePauseTorrents,
@@ -75,6 +74,12 @@ import {
 } from "@/helpers";
 import { columnsDictionary } from "@/constants";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const TorrentDetailDialog = lazy(() =>
+	import("./TorrentDetailDialog").then((m) => ({
+		default: m.TorrentDetailDialog,
+	})),
+);
 
 function SortButton({
 	field,
@@ -157,6 +162,10 @@ export function TorrentsView() {
 	const deleteMutation = useDeleteTorrents();
 
 	const [detailTorrent, setDetailTorrent] = useState<Torrent | null>(null);
+	// The detail dialog is lazy-loaded on first open, then stays mounted so
+	// its close animation still plays.
+	const [detailDialogLoaded, setDetailDialogLoaded] = useState(false);
+	if (detailTorrent && !detailDialogLoaded) setDetailDialogLoaded(true);
 	const {
 		sizeUnit,
 		tableViewSettings,
@@ -1015,19 +1024,23 @@ export function TorrentsView() {
 				</div>
 			)}
 
-			<TorrentDetailDialog
-				torrent={detailTorrent}
-				open={!!detailTorrent}
-				onOpenChange={(open) => !open && setDetailTorrent(null)}
-				onPause={(hash) => pauseMutation.mutate([hash])}
-				onResume={(hash) => resumeMutation.mutate([hash])}
-				onForceStartChange={(hash, forceStart) =>
-					forceStartMutation.mutate({ hashes: [hash], forceStart })
-				}
-				onDelete={(hash, deleteFiles) =>
-					deleteMutation.mutate({ hashes: [hash], deleteFiles })
-				}
-			/>
+			{detailDialogLoaded && (
+				<Suspense fallback={null}>
+					<TorrentDetailDialog
+						torrent={detailTorrent}
+						open={!!detailTorrent}
+						onOpenChange={(open) => !open && setDetailTorrent(null)}
+						onPause={(hash) => pauseMutation.mutate([hash])}
+						onResume={(hash) => resumeMutation.mutate([hash])}
+						onForceStartChange={(hash, forceStart) =>
+							forceStartMutation.mutate({ hashes: [hash], forceStart })
+						}
+						onDelete={(hash, deleteFiles) =>
+							deleteMutation.mutate({ hashes: [hash], deleteFiles })
+						}
+					/>
+				</Suspense>
+			)}
 		</div>
 	);
 }

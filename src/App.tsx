@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -7,12 +7,36 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { LoginForm } from "@/components/LoginForm";
 import { Layout } from "@/components/Layout";
 import { TorrentsView } from "@/components/torrents/TorrentsView";
-import { AddTorrentView } from "@/components/torrents/AddTorrentView";
-import { RSSView } from "@/components/rss/RSSView";
-import { SearchView } from "@/components/search/SearchView";
-import { LogsView } from "@/components/logs/LogsView";
-import { SettingsView } from "@/components/settings/SettingsView";
 import { VersionCheckDialog } from "@/components/VersionCheckDialog";
+
+// Secondary tabs are split into their own chunks, loaded on first visit.
+const AddTorrentView = lazy(() =>
+	import("@/components/torrents/AddTorrentView").then((m) => ({
+		default: m.AddTorrentView,
+	})),
+);
+const RSSView = lazy(() =>
+	import("@/components/rss/RSSView").then((m) => ({ default: m.RSSView })),
+);
+const SearchView = lazy(() =>
+	import("@/components/search/SearchView").then((m) => ({
+		default: m.SearchView,
+	})),
+);
+const LogsView = lazy(() =>
+	import("@/components/logs/LogsView").then((m) => ({ default: m.LogsView })),
+);
+const SettingsView = lazy(() =>
+	import("@/components/settings/SettingsView").then((m) => ({
+		default: m.SettingsView,
+	})),
+);
+
+const viewFallback = (
+	<div className="flex justify-center py-8">
+		<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+	</div>
+);
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -46,12 +70,14 @@ function AppContent() {
 		<>
 			<VersionCheckDialog currentVersion={appVersion} />
 			<Layout activeTab={activeTab} onTabChange={setActiveTab}>
-				{activeTab === "torrents" && <TorrentsView />}
-				{activeTab === "add" && <AddTorrentView />}
-				{activeTab === "rss" && <RSSView />}
-				{activeTab === "search" && <SearchView />}
-				{activeTab === "logs" && <LogsView />}
-				{activeTab === "settings" && <SettingsView />}
+				<Suspense fallback={viewFallback}>
+					{activeTab === "torrents" && <TorrentsView />}
+					{activeTab === "add" && <AddTorrentView />}
+					{activeTab === "rss" && <RSSView />}
+					{activeTab === "search" && <SearchView />}
+					{activeTab === "logs" && <LogsView />}
+					{activeTab === "settings" && <SettingsView />}
+				</Suspense>
 			</Layout>
 		</>
 	);
