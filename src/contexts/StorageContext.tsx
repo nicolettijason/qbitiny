@@ -15,20 +15,22 @@ import { defaultPreferences, defaultTorrentListDefaults } from "@/constants";
  */
 const STORAGE_KEYS: Record<StorageKey, string> = {
 	qbitUser: "qbit_user",
-	qbitPass: "qbit_pass",
 	qbitwebberSizeUnit: "qbitwebber_sizeUnit",
 	qbitwebberInteractiveTabTitle: "qbitwebber_interactiveTabTitle",
 	qbitwebberTableViewSettings: "qbitwebber_tableViewSettings",
 	qbitinyTorrentListDefaults: "qbitiny_torrentListDefaults",
 };
 
+// Password saved by versions <= 1.3.1, only read once to migrate the session.
+const LEGACY_PASS_KEY = "qbit_pass";
+
 interface StorageContextType {
 	// Auth
 	qbitUser: string;
 	setQbitUser: (value: string) => void;
 
-	qbitPass: string;
-	setQbitPass: (value: string) => void;
+	/** Returns the legacy stored password (if any) and deletes it. */
+	consumeLegacyQbitPass: () => string;
 
 	// Preferences
 	qbitwebberSizeUnit: string;
@@ -62,9 +64,6 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 	// reflects a saved session (avoids a login-page flash on reload).
 	const [qbitUser, setQbitUserState] = useState<string>(
 		() => readLocalStorage(STORAGE_KEYS.qbitUser) || "",
-	);
-	const [qbitPass, setQbitPassState] = useState<string>(
-		() => readLocalStorage(STORAGE_KEYS.qbitPass) || "",
 	);
 
 	// Preferences states
@@ -110,13 +109,14 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 		}
 	}, []);
 
-	const setQbitPass = useCallback((value: string) => {
-		setQbitPassState(value);
+	const consumeLegacyQbitPass = useCallback(() => {
+		const value = readLocalStorage(LEGACY_PASS_KEY) || "";
 		try {
-			localStorage.setItem(STORAGE_KEYS.qbitPass, value);
+			localStorage.removeItem(LEGACY_PASS_KEY);
 		} catch (error) {
-			console.error("Error saving qbitPass to storage:", error);
+			console.error("Error removing legacy password from storage:", error);
 		}
+		return value;
 	}, []);
 
 	const setQbitwebberSizeUnit = useCallback((value: string) => {
@@ -183,8 +183,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 		() => ({
 			qbitUser,
 			setQbitUser,
-			qbitPass,
-			setQbitPass,
+			consumeLegacyQbitPass,
 			qbitwebberSizeUnit,
 			setQbitwebberSizeUnit,
 			qbitwebberInteractiveTabTitle,
@@ -197,8 +196,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 		[
 			qbitUser,
 			setQbitUser,
-			qbitPass,
-			setQbitPass,
+			consumeLegacyQbitPass,
 			qbitwebberSizeUnit,
 			setQbitwebberSizeUnit,
 			qbitwebberInteractiveTabTitle,

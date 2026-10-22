@@ -17,10 +17,12 @@ import { demoClient } from "./demoClient";
 
 const DEFAULT_USER = "admin";
 
+// Authentication relies solely on qBittorrent's SID session cookie, which the
+// browser stores and sends itself (same origin). The password is never kept.
 class QBittorrentClient {
 	private username: string;
 	private password: string;
-	private sid: string | null = null;
+	private authenticated = false;
 
 	constructor(username?: string, password?: string) {
 		this.username = username || DEFAULT_USER;
@@ -30,7 +32,6 @@ class QBittorrentClient {
 	setCredentials(username: string, password: string) {
 		this.username = username;
 		this.password = password;
-		this.sid = null;
 	}
 
 	getUsername() {
@@ -38,27 +39,14 @@ class QBittorrentClient {
 	}
 
 	isConfigured(): boolean {
-		return !!this.username && !!this.password;
+		return this.authenticated;
 	}
 
 	private async request<T>(
 		endpoint: string,
 		options: RequestInit = {},
 	): Promise<T> {
-		const url = endpoint;
-
-		const headers: Record<string, string> = {
-			...(options.headers as Record<string, string>),
-		};
-
-		if (this.sid) {
-			headers["Cookie"] = `SID=${this.sid}`;
-		}
-
-		const response = await fetch(url, {
-			...options,
-			headers,
-		});
+		const response = await fetch(endpoint, options);
 
 		const responseText = await response.text();
 
@@ -85,21 +73,26 @@ class QBittorrentClient {
 			method: "POST",
 			body: formData,
 		});
+		// qBittorrent answers 200 with "Fails." on wrong credentials.
+		const body = await response.text();
+		this.password = "";
+		this.authenticated = response.ok && body.trim() === "Ok.";
+		return this.authenticated;
+	}
 
-		const setCookie = response.headers.get("set-cookie");
-		if (setCookie) {
-			const match = setCookie.match(/SID=([^;]+)/);
-			if (match) {
-				this.sid = match[1];
-				return true;
-			}
+	/** Checks whether the browser already holds a valid session cookie. */
+	async checkSession(): Promise<boolean> {
+		try {
+			await this.request<string>("/api/v2/app/version");
+			this.authenticated = true;
+		} catch {
+			this.authenticated = false;
 		}
-
-		return response.ok;
+		return this.authenticated;
 	}
 
 	async logout(): Promise<void> {
-		this.sid = null;
+		this.authenticated = false;
 		await this.request("/api/v2/auth/logout", { method: "POST" });
 	}
 

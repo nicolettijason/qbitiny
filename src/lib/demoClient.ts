@@ -32,6 +32,10 @@ class DemoQBittorrentClient {
 		return true;
 	}
 
+	async checkSession(): Promise<boolean> {
+		return this.isLoggedIn;
+	}
+
 	async logout(): Promise<void> {
 		this.isLoggedIn = false;
 	}
