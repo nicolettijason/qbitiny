@@ -11,6 +11,7 @@ import {
 	FastForward,
 	Files,
 	Filter,
+	Magnet,
 	MoreVertical,
 	Pause,
 	Play,
@@ -62,6 +63,7 @@ import type {
 	Torrent,
 } from "@/types";
 import {
+	copyToClipboard,
 	formatDate,
 	formatSize,
 	formatTime,
@@ -202,6 +204,12 @@ export function TorrentsView() {
 		paginatedTorrents,
 		totalPages,
 	} = useTorrentListState(torrents, torrentListDefaults);
+
+	const handleCopyMagnet = async (torrent: Torrent) => {
+		if (await copyToClipboard(torrent.magnet_uri))
+			toast.success("Magnet link copied");
+		else toast.error("Could not copy the magnet link");
+	};
 
 	const handleSaveAsDefault = () => {
 		setTorrentListDefaults(currentListSettings);
@@ -733,6 +741,14 @@ export function TorrentsView() {
 																<Eye className="h-4 w-4 mr-2" />
 																Details
 															</DropdownMenuItem>
+															{torrent.magnet_uri && (
+																<DropdownMenuItem
+																	onClick={() => handleCopyMagnet(torrent)}
+																>
+																	<Magnet className="h-4 w-4 mr-2" />
+																	Copy magnet link
+																</DropdownMenuItem>
+															)}
 															<DropdownMenuItem
 																onClick={() =>
 																	isActive
@@ -953,6 +969,17 @@ export function TorrentsView() {
 									>
 										<Files className="h-3.5 w-3.5" />
 									</Button>
+									{torrent.magnet_uri && (
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-7 w-7"
+											onClick={() => handleCopyMagnet(torrent)}
+											title="Copy magnet link"
+										>
+											<Magnet className="h-3.5 w-3.5" />
+										</Button>
+									)}
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
 											<Button
