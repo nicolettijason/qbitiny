@@ -16,17 +16,17 @@ npm run demo:build
 ```
 
 - Le mode démo passe par `vite --mode demo`, qui charge `.env.demo` (`VITE_DEMO_MODE=true`) — multiplateforme.
-- ⚠️ `demo:build` écrit aussi dans `release/qbitiny/public` : ne pas commiter un build démo.
+- `demo:build` écrit aussi dans `release/qbitiny/public` (dossier ignoré par git).
 - Pas de tests automatisés. Vérifier avec `npm run build` (inclut le typecheck) et `npm run lint`.
 - Proxy dev : `vite.config.ts` → `server.proxy['/api'].target` (actuellement une IP LAN perso `http://192.168.0.196:30024`).
 
 ## Build / release
 
-- Sortie dans `release/qbitiny/public/` **versionnée dans git** (c'est ce que l'utilisateur pointe comme dossier Web UI alternatif dans qBittorrent). Les commits « rebuild » / « build release » régénèrent ce dossier.
+- Sortie dans `release/qbitiny/public/`, **ignorée par git** (depuis 1.4.0) : les utilisateurs installent le zip des releases GitHub et pointent le Web UI alternatif de qBittorrent vers le dossier `qbitiny` extrait.
 - `base: "./"` → chemins relatifs, nécessaire pour être servi par qBittorrent.
 - Bundle initial ~450 kB JS / ~75 kB CSS grâce au lazy-loading (voir Architecture) : garder les nouvelles vues/dialogs lourds en `React.lazy`.
 - Plugin Vite maison `stripUnusedFlagVariant` : retire les drapeaux carrés (`.fis`) de `flag-icons` pour diviser par 2 les SVG embarqués.
-- `VITE_APP_VERSION` est injecté depuis `package.json` (`define`). Pour publier : bumper la version dans `package.json` (+ rebuild/commit de `release/`), puis `git tag vX.Y.Z && git push origin vX.Y.Z`. Le workflow `.github/workflows/release.yml` vérifie que le tag = version du `package.json`, build, zippe `release/qbitiny` en `qbitiny-vX.Y.Z.zip` et crée la release (ou ajoute le zip si elle existe déjà). Le vérificateur de MAJ (`lib/github.ts`) pointe vers ce `.zip`.
+- `VITE_APP_VERSION` est injecté depuis `package.json` (`define`). Pour publier : bumper la version dans `package.json` (`npm version X.Y.Z --no-git-tag-version`, via une PR), puis, une fois fusionné, `git tag vX.Y.Z && git push origin vX.Y.Z`. Le workflow `.github/workflows/release.yml` vérifie que le tag = version du `package.json`, build, zippe `release/qbitiny` en `qbitiny-vX.Y.Z.zip` et crée la release (ou ajoute le zip si elle existe déjà). Le vérificateur de MAJ (`lib/github.ts`) pointe vers ce `.zip`.
 - CI (`.github/workflows/ci.yml`) sur chaque PR et push sur `main` : `npm ci` + `npm run build` (bloquant) + `npm run lint` (non bloquant tant que la dette de lint existe).
 
 ## Architecture (`src/`)
@@ -108,7 +108,6 @@ Alias d'import : `@/` → `src/`.
 
 - Une branche par sujet (`feature/`, `fix/`, `perf/`, `ci/`, `docs/`…) depuis `main`, une PR par branche.
 - `main` est protégée (1 review de code owner requise) : l'auteur ne pouvant pas s'auto-approuver, les PR sont fusionnées avec `gh pr merge <n> --merge --admin` — **uniquement quand l'utilisateur le demande**.
-- Après une modif fonctionnelle destinée à être livrée : `npm run build` pour régénérer `release/` (commit séparé « rebuild » habituellement).
 
 ## Environnement (poste Windows de l'utilisateur)
 
