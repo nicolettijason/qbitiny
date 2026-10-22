@@ -110,10 +110,12 @@ export function StorageProvider({ children }: { children: ReactNode }) {
 		}
 	}, []);
 
+	// Only set when the user ticks "Remember me"; an empty value removes it.
 	const setQbitPass = useCallback((value: string) => {
 		setQbitPassState(value);
 		try {
-			localStorage.setItem(STORAGE_KEYS.qbitPass, value);
+			if (value) localStorage.setItem(STORAGE_KEYS.qbitPass, value);
+			else localStorage.removeItem(STORAGE_KEYS.qbitPass);
 		} catch (error) {
 			console.error("Error saving qbitPass to storage:", error);
 		}

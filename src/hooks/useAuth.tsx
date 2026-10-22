@@ -3,6 +3,7 @@ import React, {
 	useContext,
 	useState,
 	useEffect,
+	useRef,
 	ReactNode,
 } from "react";
 import { qbitClient } from "@/lib/api";
@@ -12,7 +13,11 @@ interface AuthContextType {
 	isAuthenticated: boolean;
 	isLoading: boolean;
 	username: string;
-	login: (username: string, password: string) => Promise<void>;
+	login: (
+		username: string,
+		password: string,
+		rememberMe: boolean,
+	) => Promise<void>;
 	logout: () => Promise<void>;
 }
 
@@ -22,51 +27,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const storage = useStorage();
+	const initialized = useRef(false);
 
+	// On startup, reuse qBittorrent's session cookie if it is still valid,
+	// otherwise log in with the remembered credentials (if "Remember me" was
+	// ticked). Either way, the client can then log in again by itself when
+	// the session expires.
 	useEffect(() => {
-		const savedUser = storage.qbitUser;
-		const savedPass = storage.qbitPass;
+		if (initialized.current) return;
+		initialized.current = true;
 
-		if (savedUser && savedPass) {
-			qbitClient.setCredentials(savedUser, savedPass);
-			qbitClient
-				.login()
-				.then((success) => {
-					setIsAuthenticated(success);
-					if (!success) {
-						storage.setQbitPass("");
-					}
-				})
-				.finally(() => setIsLoading(false));
-		} else {
-			setIsLoading(false);
-		}
-		// Only re-run when the saved credentials themselves change, not on
-		// unrelated preference updates (storage.setQbitPass is stable).
+		const restoreSession = async () => {
+			const { qbitUser, qbitPass } = storage;
+			if (qbitUser) qbitClient.setCredentials(qbitUser, qbitPass);
+			if (await qbitClient.checkSession()) return true;
+			if (qbitUser && qbitPass) {
+				const success = await qbitClient.login().catch(() => false);
+				if (!success) storage.setQbitPass("");
+				return success;
+			}
+			return false;
+		};
+
+		restoreSession()
+			.then(setIsAuthenticated)
+			.finally(() => setIsLoading(false));
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [storage.qbitUser, storage.qbitPass]);
+	}, []);
 
-	const login = async (newUsername: string, password: string) => {
+	const login = async (
+		newUsername: string,
+		password: string,
+		rememberMe: boolean,
+	) => {
 		setIsLoading(true);
 		storage.setQbitUser(newUsername);
 		try {
 			qbitClient.setCredentials(newUsername, password);
 			const success = await qbitClient.login();
-			if (success) {
-				storage.setQbitPass(password);
-				setIsAuthenticated(true);
-			} else {
-				throw new Error("Login failed");
-			}
+			if (!success) throw new Error("Invalid username or password");
+			storage.setQbitPass(rememberMe ? password : "");
+			setIsAuthenticated(true);
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
 	const logout = async () => {
-		await qbitClient.logout();
 		storage.setQbitPass("");
-		setIsAuthenticated(false);
+		try {
+			await qbitClient.logout();
+		} finally {
+			setIsAuthenticated(false);
+		}
 	};
 
 	return (
