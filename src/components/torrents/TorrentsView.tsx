@@ -165,7 +165,13 @@ export function TorrentsView() {
 	const forceStartMutation = useSetForceStart();
 	const deleteMutation = useDeleteTorrents();
 
-	const [detailTorrent, setDetailTorrent] = useState<Torrent | null>(null);
+	// Only the hash is kept: the dialog always gets the up-to-date torrent
+	// from the synced list, so speeds, progress, state… stay live.
+	const [detailHash, setDetailHash] = useState<string | null>(null);
+	const detailTorrent =
+		(detailHash && torrents?.find((t) => t.hash === detailHash)) || null;
+	// Removed meanwhile (e.g. from another client): close the dialog.
+	if (detailHash && torrents && !detailTorrent) setDetailHash(null);
 	// The detail dialog is lazy-loaded on first open, then stays mounted so
 	// its close animation still plays.
 	const [detailDialogLoaded, setDetailDialogLoaded] = useState(false);
@@ -735,7 +741,7 @@ export function TorrentsView() {
 														</DropdownMenuTrigger>
 														<DropdownMenuContent align="end">
 															<DropdownMenuItem
-																onClick={() => setDetailTorrent(torrent)}
+																onClick={() => setDetailHash(torrent.hash)}
 															>
 																<Eye className="h-4 w-4 mr-2" />
 																{t("common.details")}
@@ -859,7 +865,7 @@ export function TorrentsView() {
 								/>
 								<p
 									className="font-medium text-sm truncate max-w-[180px] flex-1 cursor-pointer leading-tight"
-									onClick={() => setDetailTorrent(torrent)}
+									onClick={() => setDetailHash(torrent.hash)}
 								>
 									{torrent.name}
 								</p>
@@ -936,7 +942,7 @@ export function TorrentsView() {
 										variant="ghost"
 										size="icon"
 										className="h-7 w-7"
-										onClick={() => setDetailTorrent(torrent)}
+										onClick={() => setDetailHash(torrent.hash)}
 									>
 										<Eye className="h-3.5 w-3.5" />
 									</Button>
@@ -964,7 +970,7 @@ export function TorrentsView() {
 										variant="ghost"
 										size="icon"
 										className="h-7 w-7"
-										onClick={() => setDetailTorrent(torrent)}
+										onClick={() => setDetailHash(torrent.hash)}
 									>
 										<Files className="h-3.5 w-3.5" />
 									</Button>
@@ -1055,7 +1061,7 @@ export function TorrentsView() {
 					<TorrentDetailDialog
 						torrent={detailTorrent}
 						open={!!detailTorrent}
-						onOpenChange={(open) => !open && setDetailTorrent(null)}
+						onOpenChange={(open) => !open && setDetailHash(null)}
 						onPause={(hash) => pauseMutation.mutate([hash])}
 						onResume={(hash) => resumeMutation.mutate([hash])}
 						onForceStartChange={(hash, forceStart) =>
