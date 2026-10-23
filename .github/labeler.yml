@@ -1,0 +1,18 @@
+# Labels set from the branch name (see "Conventions de travail" in CLAUDE.md).
+# `breaking-change` is never automatic: add it by hand when needed.
+feature:
+  - head-branch: ["^feature/"]
+bug:
+  - head-branch: ["^fix/"]
+performance:
+  - head-branch: ["^perf/"]
+refactor:
+  - head-branch: ["^refactor/"]
+docs:
+  - head-branch: ["^docs/"]
+ci:
+  - head-branch: ["^ci/"]
+build:
+  - head-branch: ["^build/"]
+skip-changelog:
+  - head-branch: ["^release/"]
