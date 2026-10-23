@@ -2,7 +2,7 @@
 
 Interface web alternative (« alternative Web UI ») pour **qBittorrent**, en React 19 + Vite 7 + TypeScript + Tailwind v4 + shadcn/ui.
 Fork de [qbitwebber](https://github.com/ksuaning-au/qbitwebber) (d'où le préfixe `qbitwebber_` des clés localStorage).
-Repo GitHub : `nicolettijason/qbitiny`. Version actuelle dans `package.json` (`1.3.1`).
+Repo GitHub : `nicolettijason/qbitiny`. Version actuelle dans `package.json` (`1.5.0`).
 
 ## Commandes
 
