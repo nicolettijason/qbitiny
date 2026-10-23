@@ -114,7 +114,8 @@ Alias d'import : `@/` → `src/`.
 
 ## Conventions de travail
 
-- Une branche par sujet (`feature/`, `fix/`, `perf/`, `ci/`, `docs/`…) depuis `main`, une PR par branche.
+- Une branche par sujet depuis `main`, une PR par branche. Le préfixe de branche pose automatiquement le label de la PR (workflow `labeler.yml`, config `.github/labeler.yml`) : `feature/` → `feature`, `fix/` → `bug`, `perf/` → `performance`, `refactor/`, `docs/`, `ci/`, `build/` → label du même nom, `release/` → `skip-changelog`.
+- Ces labels classent les notes de release générées (`.github/release.yml`). `breaking-change` n'est jamais automatique : l'ajouter à la main (`gh pr edit <n> --add-label breaking-change`) quand une PR casse une installation ou un comportement existant.
 - `main` est protégée : PR obligatoire (0 approbation requise) et check CI `build` vert. Fusion normale avec `gh pr merge <n> --merge` (plus besoin de `--admin`) — **uniquement quand l'utilisateur le demande**.
 
 ## Environnement (poste Windows de l'utilisateur)
