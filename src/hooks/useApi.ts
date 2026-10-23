@@ -81,12 +81,26 @@ export function useTorrents() {
 	});
 }
 
-export function useTorrentFiles(hash: string | null, isEnabled = true) {
+/**
+ * `isDownloading`: refresh the files every 5 s while the torrent is not
+ * finished, plus until the wanted files are seen at 100 % (last refresh
+ * once it completes).
+ */
+export function useTorrentFiles(
+	hash: string | null,
+	isEnabled = true,
+	isDownloading = false,
+) {
 	return useQuery({
 		queryKey: ["torrent", hash, "files"],
 		queryFn: () =>
 			hash ? qbitClient.getTorrentFiles(hash) : Promise.resolve([]),
 		enabled: isEnabled && !!hash,
+		refetchInterval: (query) =>
+			isDownloading ||
+			query.state.data?.some((file) => file.priority > 0 && file.progress < 1)
+				? 5000
+				: false,
 	});
 }
 

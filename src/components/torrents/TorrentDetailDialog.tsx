@@ -441,6 +441,7 @@ export function TorrentDetailDialog({
 	const { data: filesData, isLoading: filesLoading } = useTorrentFiles(
 		torrent?.hash ?? null,
 		showFiles,
+		!!torrent && torrent.progress < 1,
 	);
 	const setFilePriority = useSetFilePriority();
 	const { data: peersInfo, isLoading: peersLoading } = useTorrentPeers(
