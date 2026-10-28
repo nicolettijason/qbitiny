@@ -16,3 +16,5 @@ build:
   - head-branch: ["^build/"]
 skip-changelog:
   - head-branch: ["^release/"]
+dependencies:
+  - head-branch: ["^dependabot/"]
