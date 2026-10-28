@@ -14,6 +14,6 @@ changelog:
     - title: ⚡ Performance
       labels: [performance]
     - title: 🧰 Maintenance
-      labels: [refactor, docs, ci, build]
+      labels: [refactor, docs, ci, build, dependencies]
     - title: Other changes
       labels: ["*"]
