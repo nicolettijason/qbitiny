@@ -38,7 +38,9 @@ interface LayoutProps {
 export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 	const { t } = useTranslation();
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-	const { logout } = useAuth();
+	// No logout when qBittorrent bypasses authentication: the next request
+	// would get a new session anyway.
+	const { logout, authBypassed } = useAuth();
 	const { theme, setTheme } = useTheme();
 	const { sizeUnit, interactiveTabTitle } = useStoragePreferences();
 	const { data: transferInfo } = useTransferInfo(interactiveTabTitle);
@@ -186,14 +188,16 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 									{tab.label}
 								</Button>
 							))}
-							<Button
-								variant="ghost"
-								className="justify-start gap-2 text-destructive hover:text-destructive mt-1"
-								onClick={logout}
-							>
-								<LogOut className="h-5 w-5" />
-								{t("layout.logout")}
-							</Button>
+							{!authBypassed && (
+								<Button
+									variant="ghost"
+									className="justify-start gap-2 text-destructive hover:text-destructive mt-1"
+									onClick={logout}
+								>
+									<LogOut className="h-5 w-5" />
+									{t("layout.logout")}
+								</Button>
+							)}
 							<div className="border-t my-2" />
 							<Button
 								variant="ghost"
@@ -234,14 +238,16 @@ export function Layout({ activeTab, onTabChange, children }: LayoutProps) {
 						</Button>
 					))}
 					<div className="flex-1" />
-					<Button
-						variant="ghost"
-						className="justify-start gap-2 text-destructive hover:text-destructive mt-1"
-						onClick={logout}
-					>
-						<LogOut className="h-5 w-5" />
-						{t("layout.logout")}
-					</Button>
+					{!authBypassed && (
+						<Button
+							variant="ghost"
+							className="justify-start gap-2 text-destructive hover:text-destructive mt-1"
+							onClick={logout}
+						>
+							<LogOut className="h-5 w-5" />
+							{t("layout.logout")}
+						</Button>
+					)}
 				</aside>
 
 				{/* Main content */}

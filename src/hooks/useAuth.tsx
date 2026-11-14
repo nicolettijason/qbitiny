@@ -12,6 +12,8 @@ import { useStorage } from "@/contexts/StorageContext";
 interface AuthContextType {
 	isAuthenticated: boolean;
 	isLoading: boolean;
+	/** qBittorrent does not require authentication for this client. */
+	authBypassed: boolean;
 	username: string;
 	login: (
 		username: string,
@@ -26,13 +28,15 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
+	const [authBypassed, setAuthBypassed] = useState(false);
 	const storage = useStorage();
 	const initialized = useRef(false);
 
-	// On startup, reuse qBittorrent's session cookie if it is still valid,
-	// otherwise log in with the remembered credentials (if "Remember me" was
-	// ticked). Either way, the client can then log in again by itself when
-	// the session expires.
+	// On startup: if qBittorrent bypasses authentication for this client,
+	// there is nothing to log into (nor out of). Otherwise reuse qBittorrent's
+	// session cookie if it is still valid, else log in with the remembered
+	// credentials (if "Remember me" was ticked). Either way, the client can then
+	// log in again by itself when the session expires.
 	useEffect(() => {
 		if (initialized.current) return;
 		initialized.current = true;
@@ -40,6 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		const restoreSession = async () => {
 			const { qbitUser, qbitPass } = storage;
 			if (qbitUser) qbitClient.setCredentials(qbitUser, qbitPass);
+			if (await qbitClient.checkAuthBypass()) {
+				setAuthBypassed(true);
+				return true;
+			}
 			if (await qbitClient.checkSession()) return true;
 			if (qbitUser && qbitPass) {
 				const success = await qbitClient.login().catch(() => false);
@@ -60,17 +68,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		password: string,
 		rememberMe: boolean,
 	) => {
-		setIsLoading(true);
+		// No global isLoading here: it would swap the LoginForm for the startup
+		// spinner and remount it, losing its error message. The form shows its
+		// own pending state.
 		storage.setQbitUser(newUsername);
-		try {
-			qbitClient.setCredentials(newUsername, password);
-			const success = await qbitClient.login();
-			if (!success) throw new Error("invalid_credentials");
-			storage.setQbitPass(rememberMe ? password : "");
-			setIsAuthenticated(true);
-		} finally {
-			setIsLoading(false);
-		}
+		qbitClient.setCredentials(newUsername, password);
+		const success = await qbitClient.login();
+		if (!success) throw new Error("invalid_credentials");
+		storage.setQbitPass(rememberMe ? password : "");
+		setIsAuthenticated(true);
 	};
 
 	const logout = async () => {
@@ -87,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			value={{
 				isAuthenticated,
 				isLoading,
+				authBypassed,
 				username: qbitClient.getUsername(),
 				login,
 				logout,

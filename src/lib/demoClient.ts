@@ -38,6 +38,10 @@ class DemoQBittorrentClient {
 		return this.isLoggedIn;
 	}
 
+	async checkAuthBypass(): Promise<boolean> {
+		return false;
+	}
+
 	async logout(): Promise<void> {
 		this.isLoggedIn = false;
 	}

@@ -79,9 +79,11 @@ Alias d'import : `@/` → `src/`.
 
 ## Points importants / pièges
 
-- **Auth** : la session repose sur le cookie `SID` de qBittorrent, géré par le navigateur (même origine, aucun header à poser).
-  - `login()` : qBittorrent répond **200 `Fails.`** sur mauvais identifiants → le succès se teste sur le corps `Ok.`, pas sur `response.ok`.
-  - Au démarrage (`useAuth`) : `checkSession()` (GET `/app/version`) réutilise une session valide (marche aussi si qBittorrent bypasse l'auth pour localhost/whitelist) ; sinon login avec le mot de passe mémorisé s'il existe.
+- **Auth** : la session repose sur le cookie de session de qBittorrent (`SID`, `QBT_SID_<port>` depuis 5.2), géré par le navigateur (même origine, aucun header à poser).
+  - `login()` : qBittorrent < 5.2 répond **200 `Fails.`** sur mauvais identifiants et 200 `Ok.` en cas de succès ; **5.2+ répond 204 (corps vide)** en cas de succès → succès = `204` ou corps `Ok.`, jamais `response.ok` seul.
+  - `login()` du contexte ne touche pas à `isLoading` (réservé à la restauration de session au démarrage) : sinon `App` remplace le `LoginForm` par le spinner et le remonte, ce qui perd le message d'erreur. Le formulaire gère son propre état « en cours ».
+  - **Bypass d'auth** (qBittorrent → « Bypass authentication for clients on localhost / in whitelisted IP subnets ») : le serveur accepte toute requête **et crée lui-même un cookie de session** (HttpOnly) même sans cookie, et `auth/login` réussit avec n'importe quels identifiants. Au démarrage, `checkAuthBypass()` teste `/app/version` avec `credentials: "omit"` ; si 200 → `authBypassed` (contexte d'auth) et le bouton Logout est masqué dans `Layout` (une déconnexion serait annulée au rechargement).
+  - Au démarrage (`useAuth`), hors bypass : `checkSession()` (GET `/app/version`) réutilise une session valide (marche aussi si qBittorrent bypasse l'auth pour localhost/whitelist) ; sinon login avec le mot de passe mémorisé s'il existe.
   - Le mot de passe reste en mémoire dans le client : sur 401/403 en cours d'utilisation, `request()` refait un login (partagé entre requêtes concurrentes) puis rejoue la requête une fois.
   - `isConfigured()` = « authentifié » ; sert de `enabled` à toutes les queries React Query.
   - **Remember me** (coché par défaut dans `LoginForm`) : seul cas où le mot de passe est stocké, **en clair** dans `qbit_pass` (localStorage). Décoché ou logout → clé supprimée. Choix assumé : app destinée à un serveur, il ne faut pas devoir se reconnecter souvent.

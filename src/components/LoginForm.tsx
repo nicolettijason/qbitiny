@@ -15,13 +15,16 @@ export function LoginForm() {
 	const [password, setPassword] = useState("");
 	const [rememberMe, setRememberMe] = useState(true);
 	const [error, setError] = useState("");
-	const { login, isLoading } = useAuth();
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const { login } = useAuth();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setError("");
+		setIsSubmitting(true);
 
 		try {
+			// On success the form unmounts (App shows the main UI).
 			await login(username, password, rememberMe);
 		} catch (err) {
 			setError(
@@ -29,6 +32,7 @@ export function LoginForm() {
 					? t("login.invalidCredentials")
 					: t("login.failed"),
 			);
+			setIsSubmitting(false);
 		}
 	};
 
@@ -76,8 +80,8 @@ export function LoginForm() {
 							</Label>
 						</div>
 						{error && <p className="text-sm text-destructive">{error}</p>}
-						<Button type="submit" className="w-full" disabled={isLoading}>
-							{isLoading ? t("login.connecting") : t("login.connect")}
+						<Button type="submit" className="w-full" disabled={isSubmitting}>
+							{isSubmitting ?t("login.connecting") : t("login.connect")}
 						</Button>
 					</form>
 				</CardContent>
