@@ -17,7 +17,7 @@ class DemoQBittorrentClient {
 	private username = "";
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	setCredentials(username: string, _password: string) {
+	setCredentials(username: string, _password?: string) {
 		this.username = username;
 	}
 

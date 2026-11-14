@@ -21,6 +21,13 @@ interface AuthContextType {
 		rememberMe: boolean,
 	) => Promise<void>;
 	logout: () => Promise<void>;
+	/** Re-checks the bypass after the authentication settings changed. */
+	refreshAuthBypass: () => Promise<void>;
+	/**
+	 * Keeps the client (and the remembered password, if any) in sync after the
+	 * Web UI credentials were changed in the settings.
+	 */
+	updateCredentials: (username: string, password?: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -88,6 +95,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	};
 
+	const refreshAuthBypass = async () => {
+		setAuthBypassed(await qbitClient.checkAuthBypass());
+	};
+
+	const updateCredentials = (newUsername: string, password?: string) => {
+		qbitClient.setCredentials(newUsername, password);
+		storage.setQbitUser(newUsername);
+		if (password && storage.qbitPass) storage.setQbitPass(password);
+	};
+
 	return (
 		<AuthContext.Provider
 			value={{
@@ -97,6 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				username: qbitClient.getUsername(),
 				login,
 				logout,
+				refreshAuthBypass,
+				updateCredentials,
 			}}
 		>
 			{children}

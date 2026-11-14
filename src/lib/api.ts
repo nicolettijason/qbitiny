@@ -31,9 +31,10 @@ class QBittorrentClient {
 		this.password = password || "";
 	}
 
-	setCredentials(username: string, password: string) {
+	/** Omitting `password` keeps the current one. */
+	setCredentials(username: string, password?: string) {
 		this.username = username;
-		this.password = password;
+		if (password !== undefined) this.password = password;
 	}
 
 	getUsername() {

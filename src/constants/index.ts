@@ -56,6 +56,10 @@ export const defaultPreferences = {
 	pex: true,
 	lsd: true,
 	encryption: 0,
+	web_ui_username: "admin",
+	bypass_local_auth: false,
+	bypass_auth_subnet_whitelist_enabled: false,
+	bypass_auth_subnet_whitelist: "",
 	columns,
 	sizeUnit: "B",
 };
