@@ -274,6 +274,11 @@ export interface Preferences {
 	pex: boolean;
 	lsd: boolean;
 	encryption: number;
+	web_ui_username: string;
+	bypass_local_auth: boolean;
+	bypass_auth_subnet_whitelist_enabled: boolean;
+	/** Subnets separated by newlines (commas are also accepted when saving). */
+	bypass_auth_subnet_whitelist: string;
 }
 
 export type Columns = keyof typeof defaultPreferences.columns;

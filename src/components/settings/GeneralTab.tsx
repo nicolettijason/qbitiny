@@ -3,6 +3,7 @@ import { GeneralSettingsTab } from "./GeneralSettingsTab";
 import { TableViewSettingsCard } from "./TableViewSettingsCard";
 import { TorrentListDefaultsCard } from "./TorrentListDefaultsCard";
 import { AppearanceSettingsCard } from "./AppearanceSettingsCard";
+import { AuthenticationSettingsCard } from "./AuthenticationSettingsCard";
 import { DefaultWebUICard } from "./DefaultWebUICard";
 
 interface GeneralTabProps {
@@ -12,7 +13,10 @@ interface GeneralTabProps {
 		key: K,
 		value: Preferences[K],
 	) => void;
-	onSave: (section: string) => void;
+	onSave: (
+		section: string,
+		extra?: Record<string, unknown>,
+	) => Promise<boolean>;
 }
 
 export function GeneralTab({
@@ -35,6 +39,12 @@ export function GeneralTab({
 			/>
 			<TorrentListDefaultsCard />
 			<AppearanceSettingsCard />
+			<AuthenticationSettingsCard
+				preferences={preferences}
+				saving={saving}
+				onUpdatePreference={onUpdatePreference}
+				onSave={(extra) => onSave("authentication", extra)}
+			/>
 			<DefaultWebUICard />
 		</div>
 	);

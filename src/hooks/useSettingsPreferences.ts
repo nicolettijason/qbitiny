@@ -55,7 +55,15 @@ export function useSettingsPreferences() {
 		}
 	};
 
-	const handleSave = async (section: string) => {
+	/**
+	 * Saves the fields of one section. `extra` holds write-only fields that are
+	 * not part of `preferences` (e.g. the Web UI password). Resolves to whether
+	 * the save succeeded.
+	 */
+	const handleSave = async (
+		section: string,
+		extra: Record<string, unknown> = {},
+	): Promise<boolean> => {
 		setSaving(true);
 		try {
 			const prefsToSave: Record<string, unknown> = {};
@@ -110,17 +118,27 @@ export function useSettingsPreferences() {
 					prefsToSave.lsd = preferences.lsd;
 					prefsToSave.encryption = preferences.encryption;
 					break;
+				case "authentication":
+					prefsToSave.web_ui_username = preferences.web_ui_username;
+					prefsToSave.bypass_local_auth = preferences.bypass_local_auth;
+					prefsToSave.bypass_auth_subnet_whitelist_enabled =
+						preferences.bypass_auth_subnet_whitelist_enabled;
+					prefsToSave.bypass_auth_subnet_whitelist =
+						preferences.bypass_auth_subnet_whitelist;
+					break;
 			}
 
-			await qbitClient.setPreferences(prefsToSave);
+			await qbitClient.setPreferences({ ...prefsToSave, ...extra });
 			toast.success(
 				t("settings.saved", {
 					section: t(`settings.tabs.${section}` as TranslationKey),
 				}),
 			);
+			return true;
 		} catch (error) {
 			console.error("Failed to save preferences:", error);
 			toast.error(t("settings.saveFailed"));
+			return false;
 		} finally {
 			setSaving(false);
 		}
