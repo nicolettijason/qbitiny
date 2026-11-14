@@ -87,9 +87,11 @@ class QBittorrentClient {
 			method: "POST",
 			body: formData,
 		});
-		// qBittorrent answers 200 with "Fails." on wrong credentials.
+		// qBittorrent < 5.2 answers 200 with "Ok." / "Fails." (even on wrong
+		// credentials); 5.2+ answers 204 No Content on success.
 		const body = await response.text();
-		this.authenticated = response.ok && body.trim() === "Ok.";
+		this.authenticated =
+			response.status === 204 || (response.ok && body.trim() === "Ok.");
 		return this.authenticated;
 	}
 
@@ -114,6 +116,24 @@ class QBittorrentClient {
 			this.authenticated = false;
 		}
 		return this.authenticated;
+	}
+
+	/**
+	 * Whether qBittorrent lets this client in without authentication ("bypass
+	 * authentication for clients on localhost / in whitelisted IP subnets").
+	 * Tested without cookies, since the server hands out a session cookie to
+	 * bypassed clients anyway. If so, the client is considered authenticated.
+	 */
+	async checkAuthBypass(): Promise<boolean> {
+		try {
+			const response = await fetch("/api/v2/app/version", {
+				credentials: "omit",
+			});
+			if (response.ok) this.authenticated = true;
+			return response.ok;
+		} catch {
+			return false;
+		}
 	}
 
 	async logout(): Promise<void> {
